@@ -1,12 +1,19 @@
 /* # # # #  Code Section  # # # # */
 
+@font-face {
+  font-family: 'Source Code Pro';
+  font-style: normal;
+  font-weight: 400;
+  src: local('Source Code Pro'), local('SourceCodePro-Regular'), url(http://themes.googleusercontent.com/static/fonts/sourcecodepro/v4/mrl8jkM18OlOQN8JLgasDxM0YzuT7MdOe03otPbuUS0.woff) format('woff');
+}
+
 .codeSection {
  font-family:"Source Code Pro";
 
  display:table;
  min-width:400px;
  max-width:640px;
- white-space:nowrap;
+ white-space:pre;
  margin:10px auto 20px auto;
 
  padding:10px 5px 10px 20px;
@@ -14,12 +21,17 @@
  color:white;
 }
 
+
 .lineNumber, .returnLineNumber {
  opacity:0.8;
  padding:0em 0.5em;
  margin-right:0.75em;
  color:green;
 }
+.lineNumber:only-child {
+ display:none;
+}
+
 
 .returnLine, .returnLineNumber {
  margin:0px 0px 0.75em 0em;
@@ -28,6 +40,7 @@
  color:#ffffb3;
  background-color:rgba(250,250,250,0.1);
 }
+
 
 
 .lineNumberContainer {
@@ -44,32 +57,33 @@
  min-width:300px;
 }
 
+
 /* # # #  markLanguage CSS  # # # */
-.token-keyword {
- color:#8dd3c7;
+.marky-keyword {
+ color:purple;
 }
 
-.token-string {
- color:#fb8072;
+.marky-string {
+ color:cyan;
 }
 
-.token-operator {
- color:#b3de69;
+.marky-operator {
+ color:green;
 }
 
-.token-identifier {
- color: #fccde5;
+.marky-identifier {
+ color: yellow;
 }
 
-.token-syntax {
- color:#ffed6f;
+.marky-syntax {
+ color:blue;
 }
 
-.token-bool {
- color:#bc80bd;
+.marky-bool {
+ color:red;
 }
 
-.token-comment {
+.marky-comment {
  color:orange;
 }
 

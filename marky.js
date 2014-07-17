@@ -1,137 +1,167 @@
-var keywordsDict = {
-  "javascript": ["var", "new", "function", "RegExp", "continue",
-                  "undefined", "null"],
-  "python": []
-}
-var boolsDict = {
-  "javascript": ["true", "false"],
-  "python": ["True", "False"]
+$(document).on("ready", function() {
+// # # # # # # # # # # # # # # # # # # # # # #
+var lexer = {
+  "number": {
+      "javascript": "[0-9]*\\.?[0-9]+",
+      "python": "[0-9]*\\.?[0-9]+",
+  },
+
+  "operator": {
+      "javascript": ["+","-","*","/","===", "!=", "==", "=", "<", ">"],
+      "python": ["+","-","*","/","=","==", "!=", "<", ">"]
+  },
+
+  "syntax": {
+      "javascript": ["[","]","{","}","(",")",";", ",", "."],
+      "python": ["[","]","{","}","(",")",";", ",", "."]
+  },
+
+  "inlineComment": {
+      "javascript": "\\\/\\\/",
+      "python": "#"
+  },
+
+  "multiLineComment": {
+      "javascript": "\\\/\\\*.*?\\\*\\\/",
+      "python": "\\\"\\\"\\\".*?\\\"\\\"\\\""
+  },
+
+  "keyword": {
+      //JavaScript Rule from: http://stackoverflow.com/questions/1661197/valid-characters-for-javascript-variable-names
+      "javascript": ["do", "if", "in", "for", "let", "new", "try",
+                    "var", "case", "else", "enum", "eval", "false",
+                    "null", "this", "true", "void", "with", "break",
+                    "catch", "class", "const", "super", "throw", "while",
+                    "yield", "delete", "export", "import", "public",
+                    "return", "static", "switch", "typeof", "default",
+                    "extends", "finally", "package", "private", "continue",
+                    "debugger", "function", "arguments", "interface",
+                    "protected", "implements", "instanceof"],
+      "python": []
+  },
+
+  "bool": {
+      "javascript": ["true", "false"],
+      "python": ["True", "False"]
+  },
+
+  "identifier": {
+      "javascript": "[a-zA-Z_$]+[a-zA-Z_$1-9]*",
+      "python": ""
+  }
+
 }
 
-var operatorsDict = {
-  "javascript": ["+","-","*","/","=","==", "===", "!=", "<", ">"],
-  "python": ["+","-","*","/","=","==", "!=", "<", ">"]
-}
 
-var syntaxDict = {
-  "javascript": ["[","]","{","}","(",")",";", ",", "."],
-  "python": ["[","]","{","}","(",")",";", ",", "."]
-}
-
-var commentDict = {
-  "javascript": "//",
-  "python": "#"
+function loadRegExpArray(arr) {
+  arr = arr.map( function(elem) {
+    return elem.replace(
+      new RegExp("(\\"+"\\^${}[]().*+-?<>".split("").join("|\\")+")"),
+      "\\$1");
+  });
+  return arr.join("|");
 }
 
 
-function interpretLanguage(text) {
+// # # # # # # # # # # # # # # # # # # # # # #
+
+
+function markyInferLanguage(text) {
+  // TODO: Should test each language and see which "matches" grammar best.
+  // TODO: Alternative would be to count keyword instances, but dangerous.
   return "javascript";
 }
 
 
-function applyMarker(marker, token){
-  return "<span class='"+marker+"'>"+token+"</span>";
+function markyText(text, language) {
+
+
+  //Convert tabs to 4 spaces for cross-browser display continuity.
+  var formattedText = text.replace(/\t/g, "    ")
+
+
+  //Apply each of the language token filters to add the appropriate classes.
+  $.each(lexer, function(token, languageOptions){
+    var regexContent = languageOptions[language];
+    // Escape any characters in array inputs that need to be escaped.
+    if (regexContent instanceof Array) {
+      regexContent = loadRegExpArray(regexContent);
+    }
+
+    var operators = "";
+    if (token!=="operator") {
+      operators = loadRegExpArray( lexer["operator"][language] );
+    }
+
+    var numbers = "";
+    if (token!=="number") {
+      numbers = lexer["number"][language];
+    }
+
+    var pre = "(?:\\<\\s*?span.*?\>)?["+operators+numbers+"\\s]*?";
+    var post = "["+operators+numbers+"\\s]*?(?:\\<\\/\\s*?span.*?\>)?";
+
+    var regex = new RegExp(pre+"("+regexContent+")"+post);
+    console.log(regex);
+
+    var wrapperOpen = "<span class='marky-"+token+"'>";
+    var wrapperClose = "</span>";
+
+    formattedText = formattedText.replace(regex, wrapperOpen+"$1"+wrapperClose);
+
+  });
+
+
+
+  //Format the text in lines for the HTML container.
+  var rawLines =  formattedText.replace(/^\n*/,"").replace(/\n*$/,"").split("\n");
+  var lines ="<div class='lineContainer'>"
+  var cleanLines = 0;
+  for (var i=0; i<rawLines.length; i++){
+    lines += "<div class='rawCodeLine'>" +
+                     "<span class='lineContent'>" +
+                     rawLines[i] +
+                     "</span>" +
+                     "</div>";
+    cleanLines++;
+  }
+  lines += "</div>";
+
+  //And apply an equal number of .lineNumber elements.
+  var lineNumbers = "<div class='lineNumberContainer'>";
+  for (var i=0; i<cleanLines; i++){
+    lineNumbers += "<div class='lineNumber unselectable'>" +
+                   String(i+1) +
+                   "</div>";
+  }
+  lineNumbers += "</div>";
+
+
+  return lineNumbers + lines;
 }
 
 
-function markLanguage(language, text){
-  var keywords = keywordsDict[language];
-  var bools = boolsDict[language];
-  var operators = operatorsDict[language];
-  var syntax = syntaxDict[language];
-  var commentToken = commentDict[language];
+function markySection(codeSection) {
+  var text = $(codeSection).text();
 
-  var formattedText = "";
-  var token = "";
-  var inString = false;
-  var inComment = false;
-  var escaped = false;
+  // If the language isn't given, attempt to infer what it should be.
+  var language = $(codeSection).attr("language");
+  if (language === undefined) language = markyInferLanguage(text)
 
-  for (var i=0 ; i < text.length ; i++){
-    var c = text[i];
-    var potential = token+c;
-
-    //Escaped Characters.
-    if (escaped && c!="\\") {
-      escaped = false;
-      formattedText += applyMarker("token-escaped", potential);
-      token = "";
-      continue;
-    }
-    if (c=="\\" && token[token.length-1]!="\\") escaped = true;
-
-    if (inComment) {
-      if (c=="\n"){
-        formattedText += applyMarker("token-comment", potential);
-        inComment = false;
-        continue;
-      }
-      token += c;
-      continue
-    }
-
-    if (inString && !escaped && c=="\""){
-      formattedText += applyMarker("token-string", potential);
-      token="";
-      inString=false;
-      continue;
-    }
-
-    if (!inString && c=="\"") inString=true;
-
-    if (!inString && syntax.indexOf(c)>=0) {
-      formattedText += markLanguage(language, token);
-      formattedText += applyMarker("token-syntax", c);
-      token = "";
-      continue;
-    }
-
-    if (token==commentToken) inComment = true;
-
-
-    //Check for Keywords.
-    if (keywords.indexOf(potential)<0 && keywords.indexOf(token)>=0){
-      formattedText += applyMarker("token-keyword", token);
-      token="";
-    }
-
-    //Check for Booleans.
-    if (bools.indexOf(potential)<0 && bools.indexOf(token)>=0){
-      formattedText += applyMarker("token-bool", token);
-      token="";
-    }
-
-    //Check for Operators.
-    if (operators.indexOf(potential)<0 && operators.indexOf(token)>=0){
-      formattedText += applyMarker("token-operator", token);
-      token="";
-    }
-
-    //Check for Identifiers.
-    if (token!="" && c==" " && !inString && !inComment){
-      formattedText += applyMarker("token-identifier", potential);
-      token="";
-      continue;
-    }
-
-    //Preserve Whitespace.
-    if (token=="" && c==" ") {
-      formattedText += " ";
-      continue
-    }
-
-    token += c;
-  }
-
-  if (token.length){
-    var marker="token-identifier";
-    if (inComment) marker = "token-comment";
-    if (keywords.indexOf(token)>=0) marker="token-keyword";
-    if (operators.indexOf(token)>=0) marker="token-operator";
-    if (bools.indexOf(token)>=0) marker="token-bool";
-    formattedText += applyMarker(marker, token);
-  }
-
-  return formattedText;
+  // Apply the marky formatting to the element.
+  var formattedCode = markyText(text, language);
+  $(codeSection).html(formattedCode);
 }
 
+
+function markyDocument() {
+ $(".codeSection").each(function() {
+   markySection($(this));
+ });
+}
+
+
+markyDocument()
+
+// # # # # # # # # # # # # # # # # # # # # # #
+});
