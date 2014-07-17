@@ -1,0 +1,104 @@
+/* # # # #  Code Section  # # # # */
+
+.codeSection {
+ font-family:"Source Code Pro";
+
+ display:table;
+ min-width:400px;
+ max-width:640px;
+ white-space:nowrap;
+ margin:10px auto 20px auto;
+
+ padding:10px 5px 10px 20px;
+ background-color:rgba(0,0,0,0.95);
+ color:white;
+}
+
+.lineNumber, .returnLineNumber {
+ opacity:0.8;
+ padding:0em 0.5em;
+ margin-right:0.75em;
+ color:green;
+}
+
+.returnLine, .returnLineNumber {
+ margin:0px 0px 0.75em 0em;
+}
+.returnLine {
+ color:#ffffb3;
+ background-color:rgba(250,250,250,0.1);
+}
+
+
+.lineNumberContainer {
+ position:relative;
+ display:inline-block;
+ border-right:3px solid rgba(0,0,0,0.5);
+ background-color:rgba(0,0,0,0.5);
+}
+
+.lineContainer {
+ position:relative;
+ display:inline-block;
+ padding-left:5px;
+ min-width:300px;
+}
+
+/* # # #  markLanguage CSS  # # # */
+.token-keyword {
+ color:#8dd3c7;
+}
+
+.token-string {
+ color:#fb8072;
+}
+
+.token-operator {
+ color:#b3de69;
+}
+
+.token-identifier {
+ color: #fccde5;
+}
+
+.token-syntax {
+ color:#ffed6f;
+}
+
+.token-bool {
+ color:#bc80bd;
+}
+
+.token-comment {
+ color:orange;
+}
+
+@media all and (max-width: 650px) {
+
+ .lineNumberContainer {
+  display:none;
+ }
+
+ .codeLine {
+  font-size:0.8em;
+  white-space:pre-wrap;
+  word-break:break-all;
+  margin:15px 0px;
+  background-color:rgba(50,50,50,0.5);
+ }
+
+ .lineContainer {
+  min-width:100px;
+ }
+
+ .codeSection, .lineSection {
+  min-width:100px;
+ }
+ .codeSection {
+  padding: 0px 5px;
+ }
+
+}
+
+
+
