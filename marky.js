@@ -7,7 +7,8 @@ var lexer = {
   },
 
   "operator": {
-      "javascript": ["+","-","*","/","===", "!=", "==", "=", "<", ">"],
+      "javascript": ["+","-","*","/","===", "!=", "==", "=", "<", ">",
+                     "+=", "++", "--", "-=", "*=", ">=", "<=" ],
       "python": ["+","-","*","/","=","==", "!=", "<", ">"]
   },
 
@@ -56,11 +57,21 @@ var lexer = {
 function loadRegExpArray(arr) {
   arr = arr.map( function(elem) {
     return elem.replace(
-      new RegExp("(\\"+"\\^${}[]().*+-?<>".split("").join("|\\")+")"),
+      new RegExp("(\\"+"\\^${}[]().*+-?<>/".split("").join("|\\")+")"),
       "\\$1");
   });
   return arr.join("|");
 }
+
+function getIndexOfNth(string, pattern, n){
+  var length = string.length
+  var i = -1;
+  while(n-- && i++<length){
+    i = string.indexOf(pattern, i);
+  }
+  return i;
+}
+
 
 
 // # # # # # # # # # # # # # # # # # # # # # #
@@ -78,7 +89,7 @@ function markyText(text, language) {
 
   //Convert tabs to 4 spaces for cross-browser display continuity.
   var formattedText = text.replace(/\t/g, "    ")
-
+  var matchObjs = [];
 
   //Apply each of the language token filters to add the appropriate classes.
   $.each(lexer, function(token, languageOptions){
@@ -88,29 +99,70 @@ function markyText(text, language) {
       regexContent = loadRegExpArray(regexContent);
     }
 
-    var operators = "";
-    if (token!=="operator") {
-      operators = loadRegExpArray( lexer["operator"][language] );
+//    var pre = "(?!\\<\\s*?span.*?\\>)\\s*?";
+//    var post = "\\s*?(?!\\<\\/\\s*?span\\s*?\\>)?";
+
+//    var regex = new RegExp(pre+"("+regexContent+")"+post, "gm");
+    var pattern = new RegExp("("+regexContent+")", "gm");
+
+
+    var matches = formattedText.match(pattern);
+    var instance = {}
+    if (matches!==null){
+      for (var i=0; i < matches.length; i++) {
+        var match = matches[i];
+
+        //Get the number of specific matches that have passed so far.
+        var instanceN = 1;
+        if (instance[match]===undefined) {
+          instance[match] = instanceN;
+        } else {
+          instance[match]++;
+          var instanceN = instance[match];
+        }
+
+        var startIndex = getIndexOfNth(formattedText, match, instanceN)
+        var endIndex = startIndex + match.length;
+
+        var matchObj = {
+          "start":startIndex,
+          "end":endIndex,
+          "text":match,
+          "token":token,
+        };
+
+        matchObjs.push(matchObj);
+      }
     }
 
-    var numbers = "";
-    if (token!=="number") {
-      numbers = lexer["number"][language];
+  });
+
+  matchObjs.sort( function(a, b) {
+    return b["start"]-a["start"];
+  });
+
+  var alreadyFormatted = {};
+  for (var i=0; i < matchObjs.length; i++) {
+    var matchObj = matchObjs[i];
+    var text = matchObj["text"];
+    var token = matchObj["token"];
+    var start = matchObj["start"];
+    var end = matchObj["end"];
+
+    if (alreadyFormatted[start]===undefined){
+      alreadyFormatted[start] = token;
+    } else {
+      continue;
     }
-
-    var pre = "(?:\\<\\s*?span.*?\>)?["+operators+numbers+"\\s]*?";
-    var post = "["+operators+numbers+"\\s]*?(?:\\<\\/\\s*?span.*?\>)?";
-
-    var regex = new RegExp(pre+"("+regexContent+")"+post);
-    console.log(regex);
 
     var wrapperOpen = "<span class='marky-"+token+"'>";
     var wrapperClose = "</span>";
 
-    formattedText = formattedText.replace(regex, wrapperOpen+"$1"+wrapperClose);
-
-  });
-
+    var wrappedText = wrapperOpen + text + wrapperClose;
+    formattedText = formattedText.slice(0, start) +
+                      wrappedText +
+                      formattedText.slice(end, formattedText.length);
+  }
 
 
   //Format the text in lines for the HTML container.
