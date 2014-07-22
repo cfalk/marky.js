@@ -6,6 +6,11 @@ var lexer = {
       "python": "[0-9]*\\.?[0-9]+",
   },
 
+  "string": {
+      "javascript": "\".*?\"|'.*?'",
+      "python": "",
+  },
+
   "operator": {
       "javascript": ["+","-","*","/","===", "!=", "==", "=", "<", ">",
                      "+=", "++", "--", "-=", "*=", ">=", "<=" ],
@@ -13,7 +18,7 @@ var lexer = {
   },
 
   "syntax": {
-      "javascript": ["[","]","{","}","(",")",";", ",", "."],
+      "javascript": ["[","]","{","}","(",")",";", ",", ".", ":"],
       "python": ["[","]","{","}","(",")",";", ",", "."]
   },
 
@@ -53,6 +58,12 @@ var lexer = {
 
 }
 
+var precedence = {  // Latest === Highest Precedence
+  "javascript": ["identifier", "keyword", "string",
+                 "inlineComment", "multiLineComment"],
+  "python": [],
+}
+
 
 function loadRegExpArray(arr) {
   arr = arr.map( function(elem) {
@@ -78,14 +89,12 @@ function getIndexOfNth(string, pattern, n){
 
 
 function markyInferLanguage(text) {
-  // TODO: Should test each language and see which "matches" grammar best.
-  // TODO: Alternative would be to count keyword instances, but dangerous.
+  // TODO: Should test each language and see which "matches" keywords best.
   return "javascript";
 }
 
 
 function markyText(text, language) {
-
 
   //Convert tabs to 4 spaces for cross-browser display continuity.
   var formattedText = text.replace(/\t/g, "    ")
@@ -99,14 +108,9 @@ function markyText(text, language) {
       regexContent = loadRegExpArray(regexContent);
     }
 
-//    var pre = "(?!\\<\\s*?span.*?\\>)\\s*?";
-//    var post = "\\s*?(?!\\<\\/\\s*?span\\s*?\\>)?";
-
-//    var regex = new RegExp(pre+"("+regexContent+")"+post, "gm");
     var pattern = new RegExp("("+regexContent+")", "gm");
-
-
     var matches = formattedText.match(pattern);
+
     var instance = {}
     if (matches!==null){
       for (var i=0; i < matches.length; i++) {
@@ -133,13 +137,33 @@ function markyText(text, language) {
 
         matchObjs.push(matchObj);
       }
+
     }
 
   });
 
+  //Sort the list by both latest-to-first positions and token precedence.
   matchObjs.sort( function(a, b) {
-    return b["start"]-a["start"];
+    var diff = b["start"]-a["start"];
+    if (diff<=0 && (b["end"]-a["end"]>0)) diff=0; //TODO: EXPERIMENTAL UNSTABLE BAAAD
+    if (diff===0) {
+      console.log(a)
+      console.log(b)
+      console.log("__");
+      var precedenceList = precedence[language];
+      diff = precedenceList.indexOf(b["token"]) -
+             precedenceList.indexOf(a["token"]);
+    }
+    return diff;
   });
+
+
+  function sparseArrayEmpty(arr, min, max) {
+    for (var i=min; i < max; i++) {
+      if (arr[i]!==undefined) return false ;
+    }
+    return true;
+  }
 
   var alreadyFormatted = {};
   for (var i=0; i < matchObjs.length; i++) {
@@ -148,9 +172,11 @@ function markyText(text, language) {
     var token = matchObj["token"];
     var start = matchObj["start"];
     var end = matchObj["end"];
-
-    if (alreadyFormatted[start]===undefined){
-      alreadyFormatted[start] = token;
+i
+    if (sparseArrayEmpty(alreadyFormatted, start, end)){
+      for (var j=start; j < end; j++){
+        alreadyFormatted[j] = token;
+      }
     } else {
       continue;
     }
