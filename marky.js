@@ -1,15 +1,16 @@
 $(document).on("ready", function() {
 // # # # # # # # # # # # # # # # # # # # # # #
 var lexer = {
+  "multilineComment": {
+      "javascript": "/\\*[.\\r\\n\\s\\S]*?\\*/",
+      "python": "\"\"\".*?\"\"\""
+  },
+
   "inlineComment": {
-      "javascript": "\\\/\\\/",
+      "javascript": "//[^\\n]*",
       "python": "#"
   },
 
-  "multiLineComment": {
-      "javascript": "\\\/\\\*.*?\\\*\\\/",
-      "python": "\\\"\\\"\\\".*?\\\"\\\"\\\""
-  },
   "string": {
       "javascript": "\".*?\"|'.*?'",
       "python": "",
@@ -61,7 +62,7 @@ var lexer = {
 
 var precedence = {  // Earliest === Highest Precedence
   "javascript": [
-      "inlineComment", "multiLineComment",
+      "multilineComment", "inlineComment",
       "string", "bool", "keyword",
       "identifier", "number",
       "syntax", "operator",
@@ -113,7 +114,7 @@ function markyText(text, language) {
 
     var pattern = new RegExp("("+regexContent+")", "gm");
     var matches = formattedText.match(pattern);
-    console.log(matches)
+    console.log(pattern);
 
     var minIndex = 0;
     var instance = {}
@@ -155,7 +156,6 @@ function markyText(text, language) {
       var bPrec = precedence[language].indexOf(b["token"])
       return aPrec-bPrec;
     });
-    console.log(matchObjs);
 
     //Filter out the unneeded matches.
     var alreadyUsed = {};
@@ -189,10 +189,25 @@ function markyText(text, language) {
     var wrapperOpen = "<span class='marky-"+match["token"]+"'>";
     var wrapperClose = "</span>";
 
-    var wrappedText = wrapperOpen + match["text"] + wrapperClose;
-    formattedText = formattedText.slice(0, match["start"]) +
+    var textParts = match["text"].split("\n").filter( function(entry) {
+      return entry.length;
+    });
+
+    var offset = match["end"];
+    for (var j=textParts.length-1; j>=0; j--) {
+      var text = textParts[j];
+      var end = offset;
+      var start = end - text.length;
+      offset -= text.length;
+
+      var keepNewline = (textParts.length>1)
+      if (keepNewline!=="") offset--;
+
+      var wrappedText = wrapperOpen + text + wrapperClose;
+      formattedText = formattedText.slice(0, start) +
                       wrappedText +
-                      formattedText.slice(match["end"], formattedText.length);
+                      formattedText.slice(end, formattedText.length);
+    }
   }
 
 

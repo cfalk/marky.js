@@ -87,7 +87,7 @@
  color:pink;
 }
 
-.marky-comment {
+.marky-inlineComment, .marky-multilineComment {
  color:orange;
 }
 
