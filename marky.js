@@ -13,7 +13,7 @@ var lexer = {
 
   "string": {
       "javascript": "\".*?\"|'.*?'",
-      "python": "",
+      "python": "\".*?\"|'.*?'",
   },
 
   "operator": {
@@ -38,7 +38,11 @@ var lexer = {
                     "extends", "finally", "package", "private", "continue",
                     "debugger", "function", "arguments", "interface",
                     "protected", "implements", "instanceof"],
-      "python": []
+      "python": ['and', 'as', 'assert', 'break', 'class', 'continue',
+                 'def', 'del', 'elif', 'else', 'except', 'exec',
+                 'finally', 'for', 'from', 'global', 'if', 'import',
+                 'in', 'is', 'lambda', 'not', 'or', 'pass', 'print',
+                 'raise', 'return', 'try', 'while', 'with', 'yield']
   },
 
   "bool": {
@@ -48,15 +52,13 @@ var lexer = {
 
   "identifier": {
       "javascript": "[a-zA-Z_$]+[a-zA-Z0-9_$]*",
-      "python": ""
+      "python": "[a-zA-Z_$]+[a-zA-Z0-9_]*",
   },
 
   "number": {
       "javascript": "[0-9]*\\.?[0-9]+",
-      "python": "[0-9]*\\.?[0-9]+",
-  },
-
-
+      "python": "[0-9]*\\.?[0-9]+"
+  }
 }
 
 
@@ -69,6 +71,8 @@ var precedence = {  // Earliest === Highest Precedence
   ],
   "python": [],
 }
+
+var languages = ["javascript", "python"];
 
 
 function loadRegExpArray(arr) {
@@ -88,20 +92,82 @@ function sparseArrayEmpty(arr, min, max) {
   return true;
 }
 
+function filterMatches(matchObjs, language){
+  //Sort so that higher-precedence tokens are at front.
+  matchObjs.sort(function(a,b) {
+    var aPrec = precedence[language].indexOf(a["token"])
+    var bPrec = precedence[language].indexOf(b["token"])
+    return aPrec-bPrec;
+  });
+
+  //Filter out the unneeded matches.
+  var alreadyUsed = {};
+  var usedTokens = [];
+  for (var i=0; i < matchObjs.length; i++) {
+    var matchObj = matchObjs[i];
+    var start = matchObj["start"]
+    var end = matchObj["end"]
+    if (sparseArrayEmpty(alreadyUsed, start, end)){
+      for (var j=start; j<end; j++) alreadyUsed[j] = true;
+      usedTokens.push( matchObj );
+    } else {
+      continue;
+    }
+  }
+
+  //Now sort from greatest to least end index.
+  usedTokens.sort( function(a,b){
+    return b["end"]-a["end"];
+  });
+
+  return usedTokens;
+};
+
+
+function measureMatchQuality(text, matches) {
+  var totalChars = 0;
+  for (var i=0; i<matches.length; i++) {
+    var match = matches[i];
+    if (match["token"]=="identifier") continue;
+    var length = match["end"]-match["start"];
+    totalChars += length;
+    console.log(match["text"]);
+  }
+  return parseFloat(totalChars)/text.length;
+}
+
 
 // # # # # # # # # # # # # # # # # # # # # # #
 
 
 function markyInferLanguage(text) {
-  // TODO: Should test each language and see which "matches" keywords best.
-  return "javascript";
+  //TODO: test QUALITY instead of just QUANTITY.
+  //TODO: IE: Get the amount of unmatched text.
+
+  var languageMatches = [];
+console.log("\n\n");
+  for (var i=0; i<languages.length; i++) {
+    var language = languages[i];
+    var matches = markyGetMatches(text, language);
+
+    var quality = measureMatchQuality(text, matches);
+
+    languageMatches.push( {
+      "quality":quality,
+      "language":language
+    });
+  }
+
+  languageMatches.sort( function(a,b) {
+    return b["quality"]-a["quality"];
+  });
+console.log(languageMatches);
+  return languageMatches[0]["language"];
 }
 
 
-function markyText(text, language) {
-
+function markyGetMatches(text, language) {
   //Convert tabs to 4 spaces for cross-browser display continuity.
-  var formattedText = text.replace(/\t/g, "    ")
   var matchObjs = [];
 
   //Apply each of the language token filters to add the appropriate classes.
@@ -113,8 +179,7 @@ function markyText(text, language) {
     }
 
     var pattern = new RegExp("("+regexContent+")", "gm");
-    var matches = formattedText.match(pattern);
-    console.log(pattern);
+    var matches = text.match(pattern);
 
     var minIndex = 0;
     var instance = {}
@@ -131,7 +196,7 @@ function markyText(text, language) {
           var instanceN = instance[match];
         }
 
-        var remainingText = formattedText.slice(minIndex)
+        var remainingText = text.slice(minIndex)
         var startIndex = remainingText.indexOf(match) + minIndex
         var endIndex = startIndex + match.length;
         minIndex = endIndex;
@@ -148,43 +213,19 @@ function markyText(text, language) {
     }
   });
 
-
-  function filterMatches(matchObjs, language){
-    //Sort so that higher-precedence tokens are at front.
-    matchObjs.sort(function(a,b) {
-      var aPrec = precedence[language].indexOf(a["token"])
-      var bPrec = precedence[language].indexOf(b["token"])
-      return aPrec-bPrec;
-    });
-
-    //Filter out the unneeded matches.
-    var alreadyUsed = {};
-    var usedTokens = [];
-    for (var i=0; i < matchObjs.length; i++) {
-      var matchObj = matchObjs[i];
-      var start = matchObj["start"]
-      var end = matchObj["end"]
-      if (sparseArrayEmpty(alreadyUsed, start, end)){
-        for (var j=start; j<end; j++) alreadyUsed[j] = true;
-        usedTokens.push( matchObj );
-      } else {
-        continue;
-      }
-    }
-
-    //Now sort from greatest to least end index.
-    usedTokens.sort( function(a,b){
-      return b["end"]-a["end"];
-    });
-
-    return usedTokens;
-  };
-
   //Sort and filter the matches to avoid double-matching.
-  filteredObjs = filterMatches(matchObjs, language)
+  return filterMatches(matchObjs, language)
 
-  for (var i=0; i < filteredObjs.length; i++) {
-    var match = filteredObjs[i];
+}
+
+function markyText(text, language) {
+  //Convert tabs to 4 spaces for cross-browser display continuity.
+  var formattedText = text.replace(/\t/g, "    ")
+
+  var matches = markyGetMatches(formattedText, language);
+
+  for (var i=0; i < matches.length; i++) {
+    var match = matches[i];
 
     var wrapperOpen = "<span class='marky-"+match["token"]+"'>";
     var wrapperClose = "</span>";
@@ -242,12 +283,12 @@ function markyText(text, language) {
 function markySection(codeSection) {
   var text = $(codeSection).text();
 
-  // If the language isn't given, attempt to infer what it should be.
-  var language = $(codeSection).attr("language");
-  if (language === undefined) language = markyInferLanguage(text)
+  // If the lang isn't given, attempt to infer what it should be.
+  var lang = $(codeSection).attr("language");
+  lang = (lang===undefined) ? markyInferLanguage(text) : lang.toLowerCase();
 
   // Apply the marky formatting to the element.
-  var formattedCode = markyText(text, language);
+  var formattedCode = markyText(text, lang);
   $(codeSection).html(formattedCode);
 }
 
