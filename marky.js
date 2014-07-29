@@ -1,11 +1,15 @@
 $(document).on("ready", function() {
 // # # # # # # # # # # # # # # # # # # # # # #
 var lexer = {
-  "number": {
-      "javascript": "[0-9]*\\.?[0-9]+",
-      "python": "[0-9]*\\.?[0-9]+",
+  "inlineComment": {
+      "javascript": "\\\/\\\/",
+      "python": "#"
   },
 
+  "multiLineComment": {
+      "javascript": "\\\/\\\*.*?\\\*\\\/",
+      "python": "\\\"\\\"\\\".*?\\\"\\\"\\\""
+  },
   "string": {
       "javascript": "\".*?\"|'.*?'",
       "python": "",
@@ -20,16 +24,6 @@ var lexer = {
   "syntax": {
       "javascript": ["[","]","{","}","(",")",";", ",", ".", ":"],
       "python": ["[","]","{","}","(",")",";", ",", "."]
-  },
-
-  "inlineComment": {
-      "javascript": "\\\/\\\/",
-      "python": "#"
-  },
-
-  "multiLineComment": {
-      "javascript": "\\\/\\\*.*?\\\*\\\/",
-      "python": "\\\"\\\"\\\".*?\\\"\\\"\\\""
   },
 
   "keyword": {
@@ -52,15 +46,26 @@ var lexer = {
   },
 
   "identifier": {
-      "javascript": "[a-zA-Z_$]+[a-zA-Z_$1-9]*",
+      "javascript": "[a-zA-Z_$]+[a-zA-Z0-9_$]*",
       "python": ""
-  }
+  },
+
+  "number": {
+      "javascript": "[0-9]*\\.?[0-9]+",
+      "python": "[0-9]*\\.?[0-9]+",
+  },
+
 
 }
 
-var precedence = {  // Latest === Highest Precedence
-  "javascript": ["identifier", "keyword", "string",
-                 "inlineComment", "multiLineComment"],
+
+var precedence = {  // Earliest === Highest Precedence
+  "javascript": [
+      "inlineComment", "multiLineComment",
+      "string", "bool", "keyword",
+      "identifier", "number",
+      "syntax", "operator",
+  ],
   "python": [],
 }
 
@@ -83,6 +88,13 @@ function getIndexOfNth(string, pattern, n){
   return i;
 }
 
+
+function sparseArrayEmpty(arr, min, max) {
+  for (var i=min; i<max; i++) {
+    if (arr[i]!==undefined) return false ;
+  }
+  return true;
+}
 
 
 // # # # # # # # # # # # # # # # # # # # # # #
@@ -137,57 +149,54 @@ function markyText(text, language) {
 
         matchObjs.push(matchObj);
       }
-
     }
-
-  });
-
-  //Sort the list by both latest-to-first positions and token precedence.
-  matchObjs.sort( function(a, b) {
-    var diff = b["start"]-a["start"];
-    if (diff<=0 && (b["end"]-a["end"]>0)) diff=0; //TODO: EXPERIMENTAL UNSTABLE BAAAD
-    if (diff===0) {
-      console.log(a)
-      console.log(b)
-      console.log("__");
-      var precedenceList = precedence[language];
-      diff = precedenceList.indexOf(b["token"]) -
-             precedenceList.indexOf(a["token"]);
-    }
-    return diff;
   });
 
 
-  function sparseArrayEmpty(arr, min, max) {
-    for (var i=min; i < max; i++) {
-      if (arr[i]!==undefined) return false ;
-    }
-    return true;
-  }
+  function filterMatches(matchObjs, language){
+    //Sort so that higher-precedence tokens are at front.
+    matchObjs.sort(function(a,b) {
+      var aPrec = precedence[language].indexOf(a["token"])
+      var bPrec = precedence[language].indexOf(b["token"])
+      return aPrec-bPrec;
+    });
 
-  var alreadyFormatted = {};
-  for (var i=0; i < matchObjs.length; i++) {
-    var matchObj = matchObjs[i];
-    var text = matchObj["text"];
-    var token = matchObj["token"];
-    var start = matchObj["start"];
-    var end = matchObj["end"];
-i
-    if (sparseArrayEmpty(alreadyFormatted, start, end)){
-      for (var j=start; j < end; j++){
-        alreadyFormatted[j] = token;
+    //Filter out the unneeded matches.
+    var alreadyUsed = {};
+    var usedTokens = [];
+    for (var i=0; i < matchObjs.length; i++) {
+      var matchObj = matchObjs[i];
+      var start = matchObj["start"]
+      var end = matchObj["end"]
+      if (sparseArrayEmpty(alreadyUsed, start, end)){
+        for (var j=start; j<end; j++) alreadyUsed[j] = true;
+        usedTokens.push( matchObj );
+      } else {
+        continue;
       }
-    } else {
-      continue;
     }
 
-    var wrapperOpen = "<span class='marky-"+token+"'>";
+    //Now sort from greatest to least end index.
+    usedTokens.sort( function(a,b){
+      return b["end"]-a["end"];
+    });
+
+    return usedTokens;
+  };
+
+  //Sort and filter the matches to avoid double-matching.
+  filteredObjs = filterMatches(matchObjs, language)
+
+  for (var i=0; i < filteredObjs.length; i++) {
+    var match = filteredObjs[i];
+
+    var wrapperOpen = "<span class='marky-"+match["token"]+"'>";
     var wrapperClose = "</span>";
 
-    var wrappedText = wrapperOpen + text + wrapperClose;
-    formattedText = formattedText.slice(0, start) +
+    var wrappedText = wrapperOpen + match["text"] + wrapperClose;
+    formattedText = formattedText.slice(0, match["start"]) +
                       wrappedText +
-                      formattedText.slice(end, formattedText.length);
+                      formattedText.slice(match["end"], formattedText.length);
   }
 
 
