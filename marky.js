@@ -79,15 +79,6 @@ function loadRegExpArray(arr) {
   return arr.join("|");
 }
 
-function getIndexOfNth(string, pattern, n){
-  var length = string.length
-  var i = -1;
-  while(n-- && i++<length){
-    i = string.indexOf(pattern, i);
-  }
-  return i;
-}
-
 
 function sparseArrayEmpty(arr, min, max) {
   for (var i=min; i<max; i++) {
@@ -122,7 +113,9 @@ function markyText(text, language) {
 
     var pattern = new RegExp("("+regexContent+")", "gm");
     var matches = formattedText.match(pattern);
+    console.log(matches)
 
+    var minIndex = 0;
     var instance = {}
     if (matches!==null){
       for (var i=0; i < matches.length; i++) {
@@ -137,8 +130,10 @@ function markyText(text, language) {
           var instanceN = instance[match];
         }
 
-        var startIndex = getIndexOfNth(formattedText, match, instanceN)
+        var remainingText = formattedText.slice(minIndex)
+        var startIndex = remainingText.indexOf(match) + minIndex
         var endIndex = startIndex + match.length;
+        minIndex = endIndex;
 
         var matchObj = {
           "start":startIndex,
@@ -160,6 +155,7 @@ function markyText(text, language) {
       var bPrec = precedence[language].indexOf(b["token"])
       return aPrec-bPrec;
     });
+    console.log(matchObjs);
 
     //Filter out the unneeded matches.
     var alreadyUsed = {};
