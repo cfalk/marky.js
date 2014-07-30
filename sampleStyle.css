@@ -11,6 +11,7 @@
  font-family:"Source Code Pro";
 
  display:table;
+ position:relative;
  min-width:400px;
  max-width:640px;
  white-space:pre;
@@ -89,6 +90,15 @@
 
 .marky-inlineComment, .marky-multilineComment {
  color:orange;
+}
+
+.marky-language {
+ position:absolute;
+ right:0px;
+ bottom:0px;
+ opacity:0.5;
+ padding:2px 4px;
+ font-size:0.6em;
 }
 
 @media all and (max-width: 650px) {

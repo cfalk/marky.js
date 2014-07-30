@@ -3,12 +3,12 @@ $(document).on("ready", function() {
 var lexer = {
   "multilineComment": {
       "javascript": "/\\*[.\\r\\n\\s\\S]*?\\*/",
-      "python": "\"\"\".*?\"\"\""
+      "python": "\"\"\"[.\\r\\n\\s\\S]*?\"\"\""
   },
 
   "inlineComment": {
       "javascript": "//[^\\n]*",
-      "python": "#"
+      "python": "#[^\\n]*"
   },
 
   "string": {
@@ -18,17 +18,19 @@ var lexer = {
 
   "operator": {
       "javascript": ["+","-","*","/","===", "!=", "==", "=", "<", ">",
-                     "+=", "++", "--", "-=", "*=", ">=", "<=" ],
-      "python": ["+","-","*","/","=","==", "!=", "<", ">"]
+                     "+=", "++", "--", "-=", "*=", ">=", "<=", "%", "%="],
+      //Source: https://www.ics.uci.edu/~pattis/ICS-31/lectures/tokens.pdf
+      "python": ["+", "-", "*", "/", "//", "%", "**", "==", "!=", "<", ">", "=",
+                 "<=", ">=", "and", "not", "or", "&", "|", "~", "^", "<<", ">>"]
   },
 
   "syntax": {
       "javascript": ["[","]","{","}","(",")",";", ",", ".", ":"],
-      "python": ["[","]","{","}","(",")",";", ",", "."]
+      "python": ["[","]","{","}","(",")",";", ",", ".", ":"]
   },
 
   "keyword": {
-      //JavaScript Rule from: http://stackoverflow.com/questions/1661197/valid-characters-for-javascript-variable-names
+      //Source: http://stackoverflow.com/questions/1661197/valid-characters-for-javascript-variable-names
       "javascript": ["do", "if", "in", "for", "let", "new", "try",
                     "var", "case", "else", "enum", "eval", "false",
                     "null", "this", "true", "void", "with", "break",
@@ -38,10 +40,11 @@ var lexer = {
                     "extends", "finally", "package", "private", "continue",
                     "debugger", "function", "arguments", "interface",
                     "protected", "implements", "instanceof"],
-      "python": ['and', 'as', 'assert', 'break', 'class', 'continue',
+      //Source: http://stackoverflow.com/questions/14595922/list-of-python-keywords
+      "python": ['as', 'assert', 'break', 'class', 'continue',
                  'def', 'del', 'elif', 'else', 'except', 'exec',
                  'finally', 'for', 'from', 'global', 'if', 'import',
-                 'in', 'is', 'lambda', 'not', 'or', 'pass', 'print',
+                 'in', 'is', 'lambda', 'pass', 'print',
                  'raise', 'return', 'try', 'while', 'with', 'yield']
   },
 
@@ -63,13 +66,21 @@ var lexer = {
 
 
 var precedence = {  // Earliest === Highest Precedence
-  "javascript": [
+  "default": [
       "multilineComment", "inlineComment",
       "string", "bool", "keyword",
-      "identifier", "number",
-      "syntax", "operator",
+      "operator", "identifier",
+      "number", "syntax"
   ],
-  "python": [],
+}
+
+var borders = {
+  "javascript": { },
+  "python": { },
+  "default": {
+    "keyword":"(?:[^a-zA-Z]|^|$)",
+    //"operator":"(?:[^a-zA-Z]|^|$)",
+  }
 }
 
 var languages = ["javascript", "python"];
@@ -78,7 +89,7 @@ var languages = ["javascript", "python"];
 function loadRegExpArray(arr) {
   arr = arr.map( function(elem) {
     return elem.replace(
-      new RegExp("(\\"+"\\^${}[]().*+-?<>/".split("").join("|\\")+")"),
+      new RegExp("(\\"+"\\^${}[]().*+-?<>/".split("").join("|\\")+")", "g"),
       "\\$1");
   });
   return arr.join("|");
@@ -93,10 +104,41 @@ function sparseArrayEmpty(arr, min, max) {
 }
 
 function filterMatches(matchObjs, language){
+
+  //Keep only the larger of two options (regardless of precedence).
+  for (var i=0; i<matchObjs.length; i++) {
+    var thisDeleted = false;
+    var match1 = matchObjs[i];
+    if (match1===undefined) continue;
+
+    for (var j=i+1; j<matchObjs.length; j++){
+      var match2 = matchObjs[j];
+      if (match2===undefined) continue;
+
+      //If matches are the same size, defer to precedence.
+      if (match1["end"]-match1["start"] == match2["end"]-match2["start"]) {
+        continue;
+      }
+
+      if ((match1["start"]<=match2["start"]) && (match1["end"]>=match2["end"])){
+        matchObjs[j] = undefined;
+      } else if ((match2["start"]<=match1["start"]) && (match2["end"]>=match1["end"])){
+      if (match2["text"].indexOf(":")>=0) console.log(match2["text"]);
+        matchObjs[i] = undefined;
+      }
+    }
+  }
+
+  matchObjs = matchObjs.filter( function(entry) {
+    return entry!==undefined;
+  });
+
   //Sort so that higher-precedence tokens are at front.
   matchObjs.sort(function(a,b) {
-    var aPrec = precedence[language].indexOf(a["token"])
-    var bPrec = precedence[language].indexOf(b["token"])
+    var precOrder = precedence[language];
+    if (precOrder===undefined) precOrder = precedence["default"];
+    var aPrec = precOrder.indexOf(a["token"])
+    var bPrec = precOrder.indexOf(b["token"])
     return aPrec-bPrec;
   });
 
@@ -131,7 +173,6 @@ function measureMatchQuality(text, matches) {
     if (match["token"]=="identifier") continue;
     var length = match["end"]-match["start"];
     totalChars += length;
-    console.log(match["text"]);
   }
   return parseFloat(totalChars)/text.length;
 }
@@ -145,7 +186,6 @@ function markyInferLanguage(text) {
   //TODO: IE: Get the amount of unmatched text.
 
   var languageMatches = [];
-console.log("\n\n");
   for (var i=0; i<languages.length; i++) {
     var language = languages[i];
     var matches = markyGetMatches(text, language);
@@ -161,7 +201,6 @@ console.log("\n\n");
   languageMatches.sort( function(a,b) {
     return b["quality"]-a["quality"];
   });
-console.log(languageMatches);
   return languageMatches[0]["language"];
 }
 
@@ -178,7 +217,14 @@ function markyGetMatches(text, language) {
       regexContent = loadRegExpArray(regexContent);
     }
 
-    var pattern = new RegExp("("+regexContent+")", "gm");
+
+    // Borders indicate characters that can not be adjacent to a token.
+    // Border Priority: language-specific, a cross-language default, then none.
+    var border = borders[language][token];
+    if (border===undefined) border = borders["default"][token];
+    if (border===undefined) border = "";
+
+    var pattern = new RegExp(border+"("+regexContent+")"+border, "gm");
     var matches = text.match(pattern);
 
     var minIndex = 0;
@@ -280,16 +326,17 @@ function markyText(text, language) {
 }
 
 
-function markySection(codeSection) {
-  var text = $(codeSection).text();
+function markySection($codeSection) {
+  var text = $codeSection.text();
 
   // If the lang isn't given, attempt to infer what it should be.
-  var lang = $(codeSection).attr("language");
+  var lang = $codeSection.attr("language");
   lang = (lang===undefined) ? markyInferLanguage(text) : lang.toLowerCase();
 
   // Apply the marky formatting to the element.
   var formattedCode = markyText(text, lang);
-  $(codeSection).html(formattedCode);
+  $codeSection.html(formattedCode);
+  $codeSection.append("<div class='marky-language'>"+lang+"</div>");
 }
 
 
