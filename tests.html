@@ -25,7 +25,8 @@ var x = {
   "key":"value",
   "key1": {
     "key2" : [1, 2, 3, "hello"]
-  }
+  },
+  "key_3": /someRegExp/
 };
 
 </div>
@@ -34,7 +35,7 @@ Inline and Multiline Comments:
 <div class="codeSection">
 var x=5; // This is a comment (5+4);
 var y=6;
-  /* And
+/* And
      So
      is this */
 return x+y;
@@ -72,6 +73,35 @@ This is a comment
 """
 x = 5%5 # This is a comment.
 return x+y
+</div>
+
+
+<h1>Ruby Tests</h1>
+
+Comments Galore
+<div class="codeSection">
+=begin
+This is a comment!
+=end
+
+x = (2+2)
+defined? x    #>Should be defined!
+
+__END__
+And so is this! 2+2
+"asdf" and this # yup!
+</div>
+
+<div class="codeSection">
+x = "Hello world!"
+puts x
+</div>
+
+<div class="codeSection">
+for i in 1...10
+    print "#", i
+end
+puts "Tada!" #End of Program!
 </div>
 
 

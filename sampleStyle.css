@@ -22,8 +22,7 @@
  color:white;
 }
 
-
-.lineNumber, .returnLineNumber {
+.lineNumber, .emptyLineNumber {
  opacity:0.8;
  padding:0em 0.5em;
  margin-right:0.75em;
@@ -99,6 +98,16 @@
  opacity:0.5;
  padding:2px 4px;
  font-size:0.6em;
+}
+
+.emptyCodeLine, .emptyLineNumber {
+ height:1.25em;
+ width:100%;
+ background-color:rgba(50,50,50,0.1);
+}
+
+.emptyCodeLine:only-child:empty:before {
+ content:"No Code Found!";
 }
 
 @media all and (max-width: 650px) {

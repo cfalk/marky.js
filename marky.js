@@ -1,19 +1,23 @@
 $(document).on("ready", function() {
 // # # # # # # # # # # # # # # # # # # # # # #
+var any = "[.\\r\\n\\s\\S]";
 var lexer = {
   "multilineComment": {
-      "javascript": "/\\*[.\\r\\n\\s\\S]*?\\*/",
-      "python": "\"\"\"[.\\r\\n\\s\\S]*?\"\"\""
+      "javascript": "/\\*"+any+"*?\\*/",
+      "python": "\"\"\""+any+"*?\"\"\"",
+      "ruby":"__END__"+any+"*|\\=begin"+any+"*?\\=end"
   },
 
   "inlineComment": {
       "javascript": "//[^\\n]*",
-      "python": "#[^\\n]*"
+      "python": "#[^\\n]*",
+      "ruby": "#[^\\n]*",
   },
 
   "string": {
-      "javascript": "\".*?\"|'.*?'",
+      "javascript": "\".*?\"|'.*?'|/.*?/",
       "python": "\".*?\"|'.*?'",
+      "ruby": "\".*?\"|'.*?'",
   },
 
   "operator": {
@@ -21,12 +25,16 @@ var lexer = {
                      "+=", "++", "--", "-=", "*=", ">=", "<=", "%", "%="],
       //Source: https://www.ics.uci.edu/~pattis/ICS-31/lectures/tokens.pdf
       "python": ["+", "-", "*", "/", "//", "%", "**", "==", "!=", "<", ">", "=",
-                 "<=", ">=", "and", "not", "or", "&", "|", "~", "^", "<<", ">>"]
+                 "<=", ">=", "and", "not", "or", "&", "|", "~", "^", "<<", ">>"],
+      "ruby": ["+", "-", "*", "/", "//", "%", "**", "==", "!=", "<", ">", "=",
+               "<=>", "===", "equal?","!", "?:", "..", "...", "defined?",
+               "<=", ">=", "and", "not", "or", "&", "|", "~", "^", "<<", ">>"]
   },
 
   "syntax": {
       "javascript": ["[","]","{","}","(",")",";", ",", ".", ":"],
-      "python": ["[","]","{","}","(",")",";", ",", ".", ":"]
+      "python": ["[","]","{","}","(",")",";", ",", ".", ":"],
+      "ruby": ["[","]","{","}","(",")",";", ",", ".", ":"]
   },
 
   "keyword": {
@@ -45,22 +53,31 @@ var lexer = {
                  'def', 'del', 'elif', 'else', 'except', 'exec',
                  'finally', 'for', 'from', 'global', 'if', 'import',
                  'in', 'is', 'lambda', 'pass', 'print',
-                 'raise', 'return', 'try', 'while', 'with', 'yield']
+                 'raise', 'return', 'try', 'while', 'with', 'yield'],
+
+      "ruby": ["BEGIN", "END", "alias", "begin", "break", "case", "class",
+               "def", "do", "else", "elsif", "end", "ensure", "for", "if", "in",
+               "module", "next", "nil", "puts", "print", "redo", "rescue",
+               "retry", "return", "self", "super", "then", "undef", "unless",
+               "until", "when", "while", "yield", "__FILE__", "__LINE__"]
   },
 
   "bool": {
       "javascript": ["true", "false"],
-      "python": ["True", "False"]
+      "python": ["True", "False"],
+      "ruby": ["true", "false"]
   },
 
   "identifier": {
       "javascript": "[a-zA-Z_$]+[a-zA-Z0-9_$]*",
       "python": "[a-zA-Z_$]+[a-zA-Z0-9_]*",
+      "ruby": "($|@?@?)[a-zA-Z_]+[a-zA-Z0-9_]*"
   },
 
   "number": {
       "javascript": "[0-9]*\\.?[0-9]+",
-      "python": "[0-9]*\\.?[0-9]+"
+      "python": "[0-9]*\\.?[0-9]+",
+      "ruby": "[0-9]*\\.?[0-9]+",
   }
 }
 
@@ -68,28 +85,27 @@ var lexer = {
 var precedence = {  // Earliest === Highest Precedence
   "default": [
       "multilineComment", "inlineComment",
-      "string", "bool", "keyword",
-      "operator", "identifier",
+      "string", "bool", "operator",
+      "keyword", "identifier",
       "number", "syntax"
   ],
 }
 
 var borders = {
-  "javascript": { },
-  "python": { },
+  //"javascript": { ... }, //Example
   "default": {
     "keyword":"(?:[^a-zA-Z]|^|$)",
-    //"operator":"(?:[^a-zA-Z]|^|$)",
+    "inlineComment":"(?:[^\"']|^|$)",
   }
 }
 
-var languages = ["javascript", "python"];
+var languages = ["javascript", "python", "ruby"];
 
 
 function loadRegExpArray(arr) {
   arr = arr.map( function(elem) {
     return elem.replace(
-      new RegExp("(\\"+"\\^${}[]().*+-?<>/".split("").join("|\\")+")", "g"),
+      new RegExp("(\\"+"^${}[]().*+-?<>/|".split("").join("|\\")+")", "g"),
       "\\$1");
   });
   return arr.join("|");
@@ -110,6 +126,10 @@ function filterMatches(matchObjs, language){
     var thisDeleted = false;
     var match1 = matchObjs[i];
     if (match1===undefined) continue;
+    if (match1["end"]-match1["start"]===0) {
+      matchObjs[i]=undefined;
+      continue;
+    }
 
     for (var j=i+1; j<matchObjs.length; j++){
       var match2 = matchObjs[j];
@@ -123,7 +143,6 @@ function filterMatches(matchObjs, language){
       if ((match1["start"]<=match2["start"]) && (match1["end"]>=match2["end"])){
         matchObjs[j] = undefined;
       } else if ((match2["start"]<=match1["start"]) && (match2["end"]>=match1["end"])){
-      if (match2["text"].indexOf(":")>=0) console.log(match2["text"]);
         matchObjs[i] = undefined;
       }
     }
@@ -220,43 +239,28 @@ function markyGetMatches(text, language) {
 
     // Borders indicate characters that can not be adjacent to a token.
     // Border Priority: language-specific, a cross-language default, then none.
-    var border = borders[language][token];
-    if (border===undefined) border = borders["default"][token];
+    var border = borders[language];
+    if (border===undefined) border = borders["default"];
+    border = border[token]
     if (border===undefined) border = "";
 
     var pattern = new RegExp(border+"("+regexContent+")"+border, "gm");
-    var matches = text.match(pattern);
 
-    var minIndex = 0;
-    var instance = {}
-    if (matches!==null){
-      for (var i=0; i < matches.length; i++) {
-        var match = matches[i];
+    var end = 0;
+    var match;
+    while (match=pattern.exec(text)) {
+      var matchedText = match[1];
+      end += matchedText.length;
 
-        //Get the number of specific matches that have passed so far.
-        var instanceN = 1;
-        if (instance[match]===undefined) {
-          instance[match] = instanceN;
-        } else {
-          instance[match]++;
-          var instanceN = instance[match];
-        }
-
-        var remainingText = text.slice(minIndex)
-        var startIndex = remainingText.indexOf(match) + minIndex
-        var endIndex = startIndex + match.length;
-        minIndex = endIndex;
-
-        var matchObj = {
-          "start":startIndex,
-          "end":endIndex,
-          "text":match,
-          "token":token,
-        };
-
-        matchObjs.push(matchObj);
-      }
+      var matchObj = {
+        "start":match["index"],
+        "end":end,
+        "text":matchedText,
+        "token":token
+      };
+      matchObjs.push(matchObj);
     }
+
   });
 
   //Sort and filter the matches to avoid double-matching.
@@ -276,48 +280,50 @@ function markyText(text, language) {
     var wrapperOpen = "<span class='marky-"+match["token"]+"'>";
     var wrapperClose = "</span>";
 
-    var textParts = match["text"].split("\n").filter( function(entry) {
-      return entry.length;
-    });
+    var textParts = match["text"].split("\n");
 
-    var offset = match["end"];
-    for (var j=textParts.length-1; j>=0; j--) {
-      var text = textParts[j];
-      var end = offset;
-      var start = end - text.length;
-      offset -= text.length;
-
-      var keepNewline = (textParts.length>1)
-      if (keepNewline!=="") offset--;
-
-      var wrappedText = wrapperOpen + text + wrapperClose;
-      formattedText = formattedText.slice(0, start) +
-                      wrappedText +
-                      formattedText.slice(end, formattedText.length);
+    var newText = "";
+    for (var j=0; j<textParts.length; j++) {
+      var newLine = (textParts.length-1>j) ? "_!SPACER!_" : "";
+      newText += wrapperOpen + textParts[j] + wrapperClose + newLine
     }
+    formattedText = formattedText.slice(0, match["start"]) +
+                      newText +
+                      formattedText.slice(match["end"], formattedText.length);
   }
 
 
   //Format the text in lines for the HTML container.
-  var rawLines =  formattedText.replace(/^\n*/,"").replace(/\n*$/,"").split("\n");
+  var rawLines =  formattedText.replace(/^\n*/,"").replace(/\n*$/,"")
+                               .replace(/_!SPACER!_/g,"\n")
+                               .split("\n");
+
+  var emptyLines = {};
   var lines ="<div class='lineContainer'>"
-  var cleanLines = 0;
   for (var i=0; i<rawLines.length; i++){
-    lines += "<div class='rawCodeLine'>" +
-                     "<span class='lineContent'>" +
-                     rawLines[i] +
-                     "</span>" +
-                     "</div>";
-    cleanLines++;
+    var lineContent = rawLines[i];
+
+    if (lineContent.trim()!=="") {
+      lines += "<div class='codeLine'>" +
+                      "<span class='lineContent'>" +
+                      lineContent +
+                      "</span>" +
+                      "</div>";
+    } else {
+      emptyLines[i] = true;
+      lines += "<div class='codeLine emptyCodeLine'></div>";
+    }
   }
   lines += "</div>";
 
   //And apply an equal number of .lineNumber elements.
-  var lineNumbers = "<div class='lineNumberContainer'>";
-  for (var i=0; i<cleanLines; i++){
-    lineNumbers += "<div class='lineNumber unselectable'>" +
-                   String(i+1) +
-                   "</div>";
+  var lineNumbers = "<div class='lineNumberContainer unselectable'>";
+  for (var i=0; i<rawLines.length; i++){
+    if (emptyLines[i]===undefined){
+      lineNumbers += "<div class='lineNumber'>"+(i+1)+"</div>";
+    } else {
+      lineNumbers += "<div class='emptyLineNumber lineNumber'>"+(i+1)+"</div>";
+    }
   }
   lineNumbers += "</div>";
 
@@ -327,7 +333,7 @@ function markyText(text, language) {
 
 
 function markySection($codeSection) {
-  var text = $codeSection.text();
+  var text = $codeSection.text().trim();
 
   // If the lang isn't given, attempt to infer what it should be.
   var lang = $codeSection.attr("language");
