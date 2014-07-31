@@ -1,6 +1,6 @@
 # marky.js
 
-*"marky.js is a JavaScript tool that automatically applies classes to code features -- letting you easily apply the full power of CSS to your writing"*
+*"marky.js is a tool that applies classes to code -- letting you easily use the full power of CSS in your writing."*
 
 ---
 
