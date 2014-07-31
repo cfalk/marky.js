@@ -27,7 +27,7 @@ If you don't specify a language, marky.js will try to interpret it; however, **y
 <div class="codeSection" language="JavaScript"> ... </div>
 ```
 
-**Inline code** can be styled by using grave accent wraps: \`if (x): print y\`
+**Inline code** can be styled by using grave accent wraps: \``if (x): print y`\`
 
 ---
 
