@@ -26,8 +26,8 @@ var lexer = {
       //Source: https://www.ics.uci.edu/~pattis/ICS-31/lectures/tokens.pdf
       "python": ["+", "-", "*", "/", "//", "%", "**", "==", "!=", "<", ">", "=",
                  "<=", ">=", "and", "not", "or", "&", "|", "~", "^", "<<", ">>"],
-      "ruby": ["+", "-", "*", "/", "//", "%", "**", "==", "!=", "<", ">", "=",
-               "<=>", "===", "equal?","!", "?:", "..", "...", "defined?",
+      "ruby": ["+", "-", "*", "/", "//", "%", "**", "===", "!=", "<=>", ">", "=",
+               "<", "==", "equal?","!", "?:", "..", "...", "defined?",
                "<=", ">=", "and", "not", "or", "&", "|", "~", "^", "<<", ">>"]
   },
 
@@ -77,7 +77,7 @@ var lexer = {
   "number": {
       "javascript": "[0-9]*\\.?[0-9]+",
       "python": "[0-9]*\\.?[0-9]+",
-      "ruby": "[0-9]*\\.?[0-9]+",
+      "ruby": "[0-9]+\\.?[0-9]*",
   }
 }
 
@@ -103,11 +103,22 @@ var languages = ["javascript", "python", "ruby"];
 
 
 function loadRegExpArray(arr) {
+  //Prepare escape characters for the RegEx.
+  var escapeTokens = "\\"+"^${}[]().*+-?<>/|".split("").join("|\\");
+  var escapeRegex = new RegExp("("+escapeTokens+")", "g");
+
+  //Sort the tokens by largest to smallest, so that the RegEx will grab
+  //  larger tokens first.
+  arr.sort(function(a,b) {
+    return b.length - a.length;
+  })
+
+  //Escape any characters that should be escaped.
   arr = arr.map( function(elem) {
-    return elem.replace(
-      new RegExp("(\\"+"^${}[]().*+-?<>/|".split("").join("|\\")+")", "g"),
-      "\\$1");
+    return elem.replace(escapeRegex, "\\$1");
   });
+
+  //Join the tokens with "|" (or) conditions.
   return arr.join("|");
 }
 
