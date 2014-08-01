@@ -246,15 +246,14 @@ function markyGetMatches(text, language) {
 
     var pattern = new RegExp(border+"("+regexContent+")"+border, "gm");
 
-    var end = 0;
     var match;
     while (match=pattern.exec(text)) {
       var matchedText = match[1];
-      end += matchedText.length;
-
+      var regexStart = match["index"];
+      var start = text.slice(regexStart).indexOf(matchedText)+regexStart;
       var matchObj = {
-        "start":match["index"],
-        "end":end,
+        "start":start,
+        "end":start+matchedText.length,
         "text":matchedText,
         "token":token
       };
@@ -264,7 +263,10 @@ function markyGetMatches(text, language) {
   });
 
   //Sort and filter the matches to avoid double-matching.
-  return filterMatches(matchObjs, language)
+  var matchObjs = filterMatches(matchObjs, language)
+  console.log(language)
+  console.log(matchObjs);
+  return matchObjs;
 
 }
 
