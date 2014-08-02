@@ -59,36 +59,41 @@
 
 
 /* # # #  markLanguage CSS  # # # */
+/* Sample colorscheme source: http://colorbrewer2.org/ */
 .marky-keyword {
- color:purple;
+ color:#ffff33;
 }
 
 .marky-string {
- color:cyan;
+ color:#f781bf;
 }
 
 .marky-operator {
- color:green;
+ color:#4daf4a;
 }
 
 .marky-identifier {
- color: yellow;
+ color:#377eb8;
 }
 
 .marky-syntax {
- color:blue;
+ color:#999999;
 }
 
 .marky-bool {
- color:red;
+ color:#e41a1c;
 }
 
 .marky-number {
- color:pink;
+ color:#a65628;
 }
 
 .marky-inlineComment, .marky-multilineComment {
- color:orange;
+ color:#984ea3;
+}
+
+.marky-special {
+ color:#ff7f00;
 }
 
 .marky-language {

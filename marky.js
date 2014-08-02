@@ -19,7 +19,7 @@ var lexer = {
       "javascript": "\".*?\"|'.*?'|/.*?/",
       "python": "\".*?\"|'.*?'",
       "ruby": "\".*?\"|'.*?'",
-      "html": "\".*?\"|'.*?'",
+      "html": "\""+any+"*?\"|'"+any+"*?'",
   },
 
   "operator": {
@@ -63,20 +63,26 @@ var lexer = {
                "module", "next", "nil", "puts", "print", "redo", "rescue",
                "retry", "return", "self", "super", "then", "undef", "unless",
                "until", "when", "while", "yield", "__FILE__", "__LINE__"],
-      "html": ["a", "abbrev", "acronym", "address", "applet", "area", "au",
-                "author", "b", "banner", "base", "basefont", "bgsound", "big",
-                "blink", "blockquote", "bq", "body", "br", "caption", "center",
-                "cite", "code", "col", "colgroup", "credit", "del", "dfn", "dir",
-                "div", "dl", "dt", "dd", "em", "embed", "fig", "fn", "font", "form",
-                "frame", "frameset", "h1", "h2", "h3", "h4", "h5", "h6", "head",
-                "hr", "html", "i", "iframe", "img", "input", "ins", "isindex",
-                "kbd", "lang", "lh", "li", "link", "listing", "map", "marquee",
-                "math", "menu", "meta", "multicol", "nobr", "noframes", "note",
-                "ol", "overlay", "p", "param", "person", "plaintext", "pre", "q",
-                "range", "samp", "script", "select", "small", "spacer", "spot",
-                "strike", "strong", "sub", "sup", "tab", "table", "tbody", "td",
-                "textarea", "textflow", "tfoot", "th", "thead", "title", "tr",
-                "tt", "u", "ul", "var", "wbr", "xmp"]
+      //Source: https://developer.mozilla.org/en-US/docs/Web/Guide/HTML/HTML5/HTML5_element_list
+      "html": ["html", "Document", "Element", "head", "title", "base", "link",
+               "meta", "style", "Scripting", "Element", "script", "noscript",
+               "templateThis", "Sections", "Element", "body", "Represents",
+               "section", "nav", "article", "aside", "h1,h2,h3,h4,h5,h6",
+               "header", "footer", "address", "mainThis", "Grouping", "Element",
+               "p", "hr", "pre", "blockquote", "ol", "ul", "li", "dl", "dt", "dd",
+               "figure", "figcaption", "div", "Text-level", "Element", "a", "em",
+               "strong", "small", "s", "cite", "q", "dfn", "abbr", "data", "time",
+               "code", "var", "samp", "kbd", "sub,sup", "i", "b", "u", "mark",
+               "ruby", "rt", "rp", "bdi", "bdo", "span", "br", "wbr", "Edits",
+               "Element", "ins", "del", "Embedded", "Element", "img", "iframe",
+               "embed", "object", "param", "video", "audio", "source", "track",
+               "canvas", "map", "area", "svg", "math", "Tabular", "Element",
+               "table", "caption", "colgroup", "col", "tbody", "thead", "tfoot",
+               "tr", "td", "th", "Forms", "Element", "form", "fieldset", "legend",
+               "label", "input", "button", "select", "datalist", "optgroup",
+               "option", "textarea", "keygen", "output", "progress", "meter",
+               "Interactive", "Element", "details", "summary", "menuitem", "menu"]
+
   },
 
   "bool": {
@@ -96,6 +102,10 @@ var lexer = {
       "javascript": "[0-9]*\\.?[0-9]+",
       "python": "[0-9]+(\\.[0-9]+)?",
       "ruby": "[0-9]+(\\.[0-9]+)?",
+  },
+
+  "special": {
+      "html":"[a-zA-Z]+",
   }
 }
 
@@ -104,7 +114,7 @@ var precedence = {  // Earliest === Highest Precedence
   "default": [
       "multilineComment", "inlineComment",
       "string", "bool", "operator",
-      "keyword", "identifier",
+      "keyword", "special", "identifier",
       "number", "syntax"
   ],
 }
@@ -116,10 +126,15 @@ var borders = {
       "left":"[a-zA-Z]\\="
     },
     "identifier":{
-      "right":"\\="
+      "right":"\\s*\\=\\s*"
     },
     "keyword":{
-      "left":"\\<\\s*/?\\s*"
+      "left":"\\<\\s*/?\\s*",
+      "right":"(?:[^a-zA-Z])"
+    },
+    "special": {
+      "left":"\\<\\s*/?\\s*",
+      "right":"(?:[^a-zA-Z])"
     }
   },
   "default": {
@@ -129,7 +144,7 @@ var borders = {
 }
 
 var languages = ["javascript", "python", "ruby", "html"];
-
+var caseInsensitive = ["html"]
 
 function loadRegExpArray(arr) {
   //Prepare escape characters for the RegEx.
@@ -282,6 +297,7 @@ function getLeftRightBorders(token, language) {
 function markyGetMatches(text, language) {
   //Convert tabs to 4 spaces for cross-browser display continuity.
   var matchObjs = [];
+  var matchCase = (caseInsensitive.indexOf(language)>=0) ? "i" : "";
 
   //Apply each of the language token filters to add the appropriate classes.
   $.each(lexer, function(token, languageOptions){
@@ -299,7 +315,7 @@ function markyGetMatches(text, language) {
       var left = borderTuple[0];
       var right = borderTuple[1];
 
-      var pattern = new RegExp(left+"("+regexContent+")"+right, "gm");
+      var pattern = new RegExp(left+"("+regexContent+")"+right, "gm"+matchCase);
 
       var match;
       while (match=pattern.exec(text)) {
@@ -323,6 +339,7 @@ function markyGetMatches(text, language) {
   return matchObjs;
 }
 
+//TODO: Retain spacing/line-breaks in tag declarations? Currently strips.
 function escapeHTML(string) {
   var pre = document.createElement("pre");
   var text = document.createTextNode(string);
