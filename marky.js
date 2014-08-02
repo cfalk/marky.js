@@ -19,6 +19,7 @@ var lexer = {
       "javascript": "\".*?\"|'.*?'|/.*?/",
       "python": "\".*?\"|'.*?'",
       "ruby": "\".*?\"|'.*?'",
+      "html": "\".*?\"|'.*?'",
   },
 
   "operator": {
@@ -36,7 +37,7 @@ var lexer = {
       "javascript": ["[","]","{","}","(",")",";", ",", ".", ":"],
       "python": ["[","]","{","}","(",")",";", ",", ".", ":"],
       "ruby": ["[","]","{","}","(",")",";", ",", ".", ":"],
-      "html": ["<",">"]
+      "html": ["<",">","/", "="]
   },
 
   "keyword": {
@@ -87,13 +88,14 @@ var lexer = {
   "identifier": {
       "javascript": "[a-zA-Z_$]+[a-zA-Z0-9_$]*",
       "python": "[a-zA-Z_$]+[a-zA-Z0-9_]*",
-      "ruby": "($|@?@?)[a-zA-Z_]+[a-zA-Z0-9_]*"
+      "ruby": "($|@?@?)[a-zA-Z_]+[a-zA-Z0-9_]*",
+      "html": "[a-zA-Z_-]+"
   },
 
   "number": {
       "javascript": "[0-9]*\\.?[0-9]+",
-      "python": "[0-9]*\\.?[0-9]+",
-      "ruby": "[0-9]+\\.?[0-9]*",
+      "python": "[0-9]+(\\.[0-9]+)?",
+      "ruby": "[0-9]+(\\.[0-9]+)?",
   }
 }
 
@@ -110,7 +112,15 @@ var precedence = {  // Earliest === Highest Precedence
 var borders = {
   //"javascript": { ... }, //Example
   "html": {
-    //"keyword":"(?:\<\s*\/?\s*)" //TODO
+    "string":{
+      "left":"[a-zA-Z]\\="
+    },
+    "identifier":{
+      "right":"\\="
+    },
+    "keyword":{
+      "left":"\\<\\s*/?\\s*"
+    }
   },
   "default": {
     "keyword":"(?:[^a-zA-Z]|^|$)",
@@ -250,6 +260,24 @@ function markyInferLanguage(text) {
   return languageMatches[0]["language"];
 }
 
+function getLeftRightBorders(token, language) {
+  var left, right;
+  var border = borders[language];
+  if (border!==undefined) border = border[token]
+  if (border!==undefined){
+    if (border["left"]!==undefined) left = border["left"];
+    if (border["right"]!==undefined) right = border["right"];
+  }
+
+  if (border===undefined) {
+    left = borders["default"][token];
+    right = borders["default"][token];
+  }
+
+  if (left===undefined) left = "";
+  if (right===undefined) right = "";
+  return [left, right];
+}
 
 function markyGetMatches(text, language) {
   //Convert tabs to 4 spaces for cross-browser display continuity.
@@ -267,12 +295,11 @@ function markyGetMatches(text, language) {
 
       // Borders indicate characters that can not be adjacent to a token.
       // Border Priority: language-specific, a cross-language default, then none.
-      var border = borders[language];
-      if (border===undefined) border = borders["default"];
-      border = border[token]
-      if (border===undefined) border = "";
+      var borderTuple = getLeftRightBorders(token, language);
+      var left = borderTuple[0];
+      var right = borderTuple[1];
 
-      var pattern = new RegExp(border+"("+regexContent+")"+border, "gm");
+      var pattern = new RegExp(left+"("+regexContent+")"+right, "gm");
 
       var match;
       while (match=pattern.exec(text)) {
@@ -313,6 +340,7 @@ function applyMarkyWrapper(match, text) {
   for (var i=0; i<textParts.length; i++) {
     var content = textParts[i];
     if (match["escape"]===true) content = escapeHTML(textParts[i]);
+    if (content==="") content=" ";
 
     var newLine = (textParts.length-1>i) ? "_!SPACER!_" : "";
     newText += wrapperOpen + content + wrapperClose + newLine
@@ -375,6 +403,9 @@ function markySection($codeSection) {
   // Apply the marky formatting to the element.
   var formattedCode = markyText(text, lang);
   $codeSection.html(formattedCode);
+
+  //Apply elements so different languages can have different classes.
+  $codeSection.addClass("marky-"+lang.replace(" ","-"));
   $codeSection.append("<div class='marky-language'>"+lang+"</div>");
 }
 
