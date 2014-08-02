@@ -94,7 +94,7 @@ var lexer = {
   "identifier": {
       "javascript": "[a-zA-Z_$]+[a-zA-Z0-9_$]*",
       "python": "[a-zA-Z_$]+[a-zA-Z0-9_]*",
-      "ruby": "($|@?@?)[a-zA-Z_]+[a-zA-Z0-9_]*",
+      "ruby": "($|@?@?)[a-zA-Z_]+[a-zA-Z0-9_]*(\\?|\\!)?",
       "html": "[a-zA-Z_-]+"
   },
 
@@ -119,8 +119,15 @@ var precedence = {  // Earliest === Highest Precedence
   ],
 }
 
-var borders = {
-  //"javascript": { ... }, //Example
+var borders = { //Precedence: Language, Default, None ("")
+  /*
+  "example": {
+    "feature": {
+      "left":"pattern" //(If one side given, other is "".
+    },
+    "feature2": "pattern" //Applies pattern to both sides.
+  }
+  */
   "html": {
     "string":{
       "left":"[a-zA-Z]\\="
@@ -130,16 +137,16 @@ var borders = {
     },
     "keyword":{
       "left":"\\<\\s*/?\\s*",
-      "right":"(?:[^a-zA-Z])"
+      "right":"[^a-zA-Z]"
     },
     "special": {
       "left":"\\<\\s*/?\\s*",
-      "right":"(?:[^a-zA-Z])"
+      "right":"[^a-zA-Z]"
     }
   },
   "default": {
-    "keyword":"(?:[^a-zA-Z]|^|$)",
-    "inlineComment":"(?:[^\"']|^|$)",
+    "keyword":"[^a-zA-Z]|^|$",
+    "inlineComment":"[^\"']|^|$",
   }
 }
 
@@ -314,6 +321,8 @@ function markyGetMatches(text, language) {
       var borderTuple = getLeftRightBorders(token, language);
       var left = borderTuple[0];
       var right = borderTuple[1];
+      if (left!=="") left = "(?:"+left+")";
+      if (right!=="") right = "(?:"+right+")";
 
       var pattern = new RegExp(left+"("+regexContent+")"+right, "gm"+matchCase);
 
