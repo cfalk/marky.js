@@ -6,7 +6,7 @@
 
 **Usage**
 
-Using marky.js is simple! If you have a block of code you want to style, just **wrap it in a `.codeSection` class**: 
+Using marky.js is simple! If you have a block of code you want to style, just **wrap it in a `.codeSection` class**:
 ```
 <div class="codeSection"> var x=5; </div>
 ```
@@ -28,6 +28,14 @@ If you don't specify a language, marky.js will try to interpret it; however, **y
 ```
 
 **Inline code** can be styled by using grave accent wraps: \``if (x): print y`\`
+
+Note that if you use a `div` container for your code, the browser may interpret it before marky.js can use it (and thus it may lose formatting). If your code contains HTML, we recommend using a `textarea` block instead of a `div`:
+
+<textarea class="codeSection">
+<div>
+  <a href="/myURL/">Hello world!</a>
+</div>
+</textarea>
 
 ---
 

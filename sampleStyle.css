@@ -1,4 +1,8 @@
 /* Demo Page CSS -- not needed for Marky.js */
+::selection {
+ background-color:red;
+}
+
 body {
  background-color:#ece7f2;
  color:#061641;

@@ -32,6 +32,8 @@ function myFunction() {
 myFunction();
 </div>
 
+<p>However, you can use any tag to contain your code. For example, use a `textarea` block if you want to prevent the browser from "cleaning" your code.</p>
+
 <h1>Tests</h1>
 <h2>JavaScript Tests</h2>
 
@@ -79,8 +81,8 @@ return x+y;
  4
 </div>
 
-<p>Uber jQuery Snippet</p>
-<div class="codeSection">
+<p>Uber jQuery Snippet (as textarea)</p>
+<textarea class="codeSection" langasdf="234">
 $(document).on("ready", function() {
   $("h1, h2, h3").each(function() {
     var $this = $(this);
@@ -95,7 +97,7 @@ $(document).on("ready", function() {
     });
   });
 });
-</div>
+</textarea>
 
 
 <h2>Python Tests</h2>
@@ -173,7 +175,7 @@ world
 <a><p>Some link!</p></a>
 </div>
 
-<p>Deeply nested tags, a custom tag, and strange capitalization.</p>
+<p>Deeply nested tags, a custom tag, and strange capitalization as div:</p>
 <div class="codeSection">
 <div id="theID" class = "someClass">
   <SpAN id=someSpan>
@@ -185,6 +187,20 @@ world
   </span>
 </div>
 </div>
+
+<p>Same test as above but with textarea (should not be "cleaned"):</p>
+<textarea class="codeSection">
+<div id="theID" class = "someClass">
+  <SpAN id=someSpan>
+    <A href="http://google.com">
+      <aCustomTag data-sample=4>
+        Hello world!
+      </aCustomTag>
+    </a>
+  </span>
+</div>
+</textarea>
+
 
 <h2>Misc. Tests</h2>
 <p>Language-ambiguous code:</p>

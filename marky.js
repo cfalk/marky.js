@@ -348,13 +348,14 @@ function markyGetMatches(text, language) {
   return matchObjs;
 }
 
-//TODO: Retain spacing/line-breaks in tag declarations? Currently strips.
 function escapeHTML(string) {
   var pre = document.createElement("pre");
   var text = document.createTextNode(string);
   pre.appendChild(text);
   return pre.innerHTML;
 }
+
+//Escape enough chars that the browser does not interpret the string as HTML.
 function unEscapeHTML(string) {
   return string.replace(/&lt;/g,"<")
                .replace(/&gt;/g,">")
@@ -433,11 +434,19 @@ function markySection($codeSection) {
 
   // Apply the marky formatting to the element.
   var formattedCode = markyText(text, lang);
-  $codeSection.html(formattedCode);
 
-  //Apply elements so different languages can have different classes.
-  $codeSection.addClass("marky-"+lang.replace(" ","-"));
-  $codeSection.append("<div class='marky-language'>"+lang+"</div>");
+  //Grab the attributes of the container element.
+  attrs = {};
+  $.each($codeSection[0].attributes, function(i, attr) {
+    attrs[attr.nodeName] = attr.nodeValue;
+  });
+
+  //Construct a new container so that textarea/divs are rendered the same.
+  var $newBlock = $("<div></div>", attrs).html(formattedCode);
+  $newBlock.addClass("marky-"+lang.replace(/ /g,""));
+  $newBlock.append("<div class='marky-language'>"+lang+"</div>");
+
+  $codeSection.replaceWith($newBlock);
 }
 
 
