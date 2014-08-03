@@ -42,7 +42,7 @@ var x = 5;
 
 <p>Multiple lines of code:</p>
 <div class="codeSection">
-if (x==1) {
+if (x>=1) {
   x=2;
   if (y==3) {
     y=4;
@@ -72,6 +72,31 @@ var y=6;
 return x+y;
 
 </div>
+
+<p>Console Snippet</p>
+<div class="codeSection">
+>>> 2+2;
+ 4
+</div>
+
+<p>Uber jQuery Snippet</p>
+<div class="codeSection">
+$(document).on("ready", function() {
+  $("h1, h2, h3").each(function() {
+    var $this = $(this);
+    var url = $this.html().trim().replace(" ","");
+    var prefix = "jump-";
+    var wrapper = "<a name="+prefix+url+" href=#"+prefix+url+"></a>";
+    $this.wrap(wrapper);
+    $this.parent().css({
+      "color":"inherit",
+      "text-decoration":"inherit",
+      "outline":"inherit"
+    });
+  });
+});
+</div>
+
 
 <h2>Python Tests</h2>
 <p>Basic Function Declaration:</p>

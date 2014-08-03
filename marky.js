@@ -50,7 +50,7 @@ var lexer = {
                     "return", "static", "switch", "typeof", "default",
                     "extends", "finally", "package", "private", "continue",
                     "debugger", "function", "arguments", "interface",
-                    "protected", "implements", "instanceof"],
+                    "protected", "implements", "instanceof", "document"],
       //Source: http://stackoverflow.com/questions/14595922/list-of-python-keywords
       "python": ['as', 'assert', 'break', 'class', 'continue',
                  'def', 'del', 'elif', 'else', 'except', 'exec',
@@ -336,7 +336,7 @@ function markyGetMatches(text, language) {
           "end":start+matchedText.length,
           "text":matchedText,
           "token":token,
-          "escape":language==="html"
+          "language":language
         };
         matchObjs.push(matchObj);
       }
@@ -355,6 +355,11 @@ function escapeHTML(string) {
   pre.appendChild(text);
   return pre.innerHTML;
 }
+function unEscapeHTML(string) {
+  return string.replace(/&lt;/g,"<")
+               .replace(/&gt;/g,">")
+               .replace(/&quot;/g, "\"");
+}
 
 function applyMarkyWrapper(match, text) {
   var wrapperOpen = "<span class='marky-"+match["token"]+"'>";
@@ -364,8 +369,7 @@ function applyMarkyWrapper(match, text) {
 
   var newText = "";
   for (var i=0; i<textParts.length; i++) {
-    var content = textParts[i];
-    if (match["escape"]===true) content = escapeHTML(textParts[i]);
+    var content = escapeHTML(textParts[i]);
     if (content==="") content=" ";
 
     var newLine = (textParts.length-1>i) ? "_!SPACER!_" : "";
@@ -419,8 +423,9 @@ function markyText(text, language) {
 }
 
 function markySection($codeSection) {
-  //Escape any inner HTML content.
-  var text = $codeSection.html().trim();
+  //Grab the content (and escape any inner HTML)
+  var text = $codeSection.html().trim()
+  text = unEscapeHTML(text);
 
   // If the lang isn't given, attempt to infer what it should be.
   var lang = $codeSection.attr("language");
