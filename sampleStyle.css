@@ -1,5 +1,43 @@
-/* # # # #  Code Section  # # # # */
+/* Demo Page CSS -- not needed for Marky.js */
+body {
+ background-color:#ece7f2;
+ color:#061641;
+ margin:0px;
+ padding:0px;
+}
 
+h1, h2, h3 {
+ text-align:center;
+ margin:0px;
+ padding:0px;
+}
+
+h1 {
+ background-color:#7fcdbb;
+ box-shadow: 0px 0px 4px rgba(127,205,187, 0.5) ;
+ text-shadow: 0px 0px 1px rgba(6,22,65,0.5) ;
+ padding:5px;
+}
+
+h2 {
+ background-color:white;
+ padding:2px;
+ margin-bottom:1em;
+ box-shadow: 0px 0px 2px white;
+}
+
+p {
+ text-align:center;
+ font-size:1.3em;
+ font-family:arial;
+ max-width:400px;
+ margin: 10px auto;
+ padding:5px;
+ background-color:rgba(255,255,217, 0.5);
+ box-shadow:0px 0px 2px rgba(255,255,217, 0.5);
+}
+
+/* # # #  Sample Marky.js CSS  # # # */
 @font-face {
   font-family: 'Source Code Pro';
   font-style: normal;
@@ -7,94 +45,36 @@
   src: local('Source Code Pro'), local('SourceCodePro-Regular'), url(http://themes.googleusercontent.com/static/fonts/sourcecodepro/v4/mrl8jkM18OlOQN8JLgasDxM0YzuT7MdOe03otPbuUS0.woff) format('woff');
 }
 
-.codeSection {
+body {
  font-family:"Source Code Pro";
+}
 
- display:table;
- position:relative;
- min-width:400px;
- max-width:640px;
- white-space:pre;
- margin:10px auto 20px auto;
-
- padding:10px 5px 10px 20px;
- background-color:rgba(0,0,0,0.95);
- color:white;
+.lineContainer {
+ padding-left:1em;
 }
 
 .lineNumber, .emptyLineNumber {
  opacity:0.8;
  padding:0em 0.5em;
  margin-right:0.75em;
- color:green;
+ color:#7fcdbb;
 }
-.lineNumber:only-child {
- display:none;
-}
-
-
-.returnLine, .returnLineNumber {
- margin:0px 0px 0.75em 0em;
-}
-.returnLine {
- color:#ffffb3;
- background-color:rgba(250,250,250,0.1);
-}
-
-
 
 .lineNumberContainer {
- position:relative;
- display:inline-block;
  border-right:3px solid rgba(0,0,0,0.5);
  background-color:rgba(0,0,0,0.5);
 }
 
-.lineContainer {
- position:relative;
- display:inline-block;
- padding-left:5px;
- min-width:300px;
-}
-
-
-/* # # #  markLanguage CSS  # # # */
 /* Sample colorscheme source: http://colorbrewer2.org/ */
-.marky-keyword {
- color:#ffff33;
-}
-
-.marky-string {
- color:#f781bf;
-}
-
-.marky-operator {
- color:#4daf4a;
-}
-
-.marky-identifier {
- color:#377eb8;
-}
-
-.marky-syntax {
- color:#999999;
-}
-
-.marky-bool {
- color:#e41a1c;
-}
-
-.marky-number {
- color:#a65628;
-}
-
-.marky-inlineComment, .marky-multilineComment {
- color:#984ea3;
-}
-
-.marky-special {
- color:#ff7f00;
-}
+.marky-keyword { color:#ffff33; }
+.marky-string { color:#f781bf; }
+.marky-operator { color:#4daf4a; }
+.marky-identifier { color:#377eb8; }
+.marky-syntax { color:#999999; }
+.marky-bool { color:#e41a1c; }
+.marky-number { color:#a65628; }
+.marky-inlineComment, .marky-multilineComment { color:#984ea3; }
+.marky-special { color:#ff7f00; }
 
 .marky-language {
  position:absolute;
@@ -105,42 +85,69 @@
  font-size:0.6em;
 }
 
-.emptyCodeLine, .emptyLineNumber {
- height:1.25em;
- width:100%;
- background-color:rgba(50,50,50,0.1);
+.emptyCodeLine, .emptyLineNumber { background-color:rgba(50,50,50,0.1); }
+
+.codeSection {
+ box-shadow: 0px 0px 1px black;
+ background-color:rgba(0,0,0,0.95);
+ color:white;
 }
 
+
+
+/* Required */
+.codeSection {
+ display:table;
+ position:relative;
+ min-width:400px;
+ max-width:640px;
+ white-space:pre;
+ margin:10px auto 20px auto;
+ padding:10px 5px 10px 20px;
+}
+
+/* Required */
+.lineNumber:only-child {
+ display:none;
+}
+
+/* Required */
 .emptyCodeLine:only-child:empty:before {
  content:"No Code Found!";
 }
 
-@media all and (max-width: 650px) {
+/* Required */
+.lineNumberContainer, .lineContainer {
+ display:inline-block;
+}
 
- .lineNumberContainer {
-  display:none;
- }
+/* Required */
+.emptyCodeLine, .emptyLineNumber {
+ height:1.25em;
+ width:100%;
+ box-sizing:border-box;
+}
+
+@media all and (max-width: 650px) {
+ .lineNumberContainer { display:none; }
 
  .codeLine {
   font-size:0.8em;
   white-space:pre-wrap;
   word-break:break-all;
-  margin:15px 0px;
-  background-color:rgba(50,50,50,0.5);
  }
 
  .lineContainer {
   min-width:100px;
+  padding:10px 10px;
  }
 
  .codeSection, .lineSection {
   min-width:100px;
  }
  .codeSection {
-  padding: 0px 5px;
+  padding: 0px 10px;
  }
 
 }
-
-
 
