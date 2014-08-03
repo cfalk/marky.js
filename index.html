@@ -1,4 +1,17 @@
+<html>
+<head>
 <link rel="stylesheet" href="sampleStyle.css" />
+
+<title>marky.js</title>
+
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+<script src="marky.js"></script>
+<script src="demo.js"></script>
+
+</head>
+
+<body>
+<div class="heading">marky.js</div>
 
 <h1>Usage</h1>
 <p>Using marky.js is easy!</p>
@@ -34,8 +47,7 @@ myFunction();
 
 <p>However, you can use any tag to contain your code. For example, use a `textarea` block if you want to prevent the browser from "cleaning" your code.</p>
 
-<h1>Tests</h1>
-<h2>JavaScript Tests</h2>
+<h1>JavaScript Tests</h1>
 
 <p>Single line of code:</p>
 <div class="codeSection">
@@ -84,7 +96,7 @@ return x+y;
 <p>Uber jQuery Snippet (as textarea)</p>
 <textarea class="codeSection" langasdf="234">
 $(document).on("ready", function() {
-  $("h1, h2, h3").each(function() {
+  $("h1, h1, h3").each(function() {
     var $this = $(this);
     var url = $this.html().trim().replace(" ","");
     var prefix = "jump-";
@@ -100,7 +112,7 @@ $(document).on("ready", function() {
 </textarea>
 
 
-<h2>Python Tests</h2>
+<h1>Python Tests</h1>
 <p>Basic Function Declaration:</p>
 <div class="codeSection">
 def myFunction():
@@ -133,7 +145,7 @@ return x+y
 </div>
 
 
-<h2>Ruby Tests</h2>
+<h1>Ruby Tests</h1>
 
 <p>Comments Galore</p>
 <div class="codeSection">
@@ -163,7 +175,7 @@ end
 puts "Tada!" #End of Program!
 </div>
 
-<h2>HTML Tests</h2>
+<h1>HTML Tests</h1>
 
 <p>Basic HTML with comment:</p>
 <div class="codeSection">
@@ -202,7 +214,7 @@ world
 </textarea>
 
 
-<h2>Misc. Tests</h2>
+<h1>Misc. Tests</h1>
 <p>Language-ambiguous code:</p>
 <div class="codeSection">
 x = 5;
@@ -218,9 +230,5 @@ x += 2;
 <div class="codeSection">
 </div>
 
-
-
-<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
-<script src="marky.js"></script>
-<script src="demo.js"></script>
-
+</body>
+</html>
