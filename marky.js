@@ -19,7 +19,7 @@ var lexer = {
       "javascript": "\".*?\"|'.*?'|/.*?/",
       "python": "\".*?\"|'.*?'",
       "ruby": "\".*?\"|'.*?'",
-      "html": "\""+any+"*?\"|'"+any+"*?'",
+      "html": "\""+any+"*?\"|'"+any+"*?'|[^ >]+",
   },
 
   "operator": {
@@ -130,14 +130,14 @@ var borders = { //Precedence: Language, Default, None ("")
   */
   "html": {
     "string":{
-      "left":"[a-zA-Z]\\="
+      "left":"\\s*\\=\\s*"
     },
     "identifier":{
       "right":"\\s*\\=\\s*"
     },
     "keyword":{
       "left":"\\<\\s*/?\\s*",
-      "right":"[^a-zA-Z]"
+      "right":"[^>]*>"
     },
     "special": {
       "left":"\\<\\s*/?\\s*",
