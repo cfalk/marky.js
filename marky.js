@@ -19,7 +19,7 @@ var lexer = {
       "javascript": "\".*?\"|'.*?'|/.*?/",
       "python": "\".*?\"|'.*?'",
       "ruby": "\".*?\"|'.*?'",
-      "html": "\""+any+"*?\"|'"+any+"*?'|[^ >]+",
+      "html": "\""+any+"*?\"|'"+any+"*?'|[^ >;,]+",
   },
 
   "operator": {
@@ -130,10 +130,10 @@ var borders = { //Precedence: Language, Default, None ("")
   */
   "html": {
     "string":{
-      "left":"\\s*\\=\\s*"
+      "left":"\\s*\\=\\s*" //TODO: Regex is lazy and needs to block HTML innards.
     },
     "identifier":{
-      "right":"\\s*\\=\\s*"
+      "right":"\\s*\\=\\s*" //TODO: Same as above.
     },
     "keyword":{
       "left":"\\<\\s*/?\\s*",
