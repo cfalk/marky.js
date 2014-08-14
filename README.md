@@ -49,7 +49,8 @@ Currently, marky.js supports the following languages:
  - Python (2.7)
  - Ruby
  - HTML
+ - Bash (shell)
 
 Future versions plan to support:
-
- - Bash
+ - Haskell
+ - C
