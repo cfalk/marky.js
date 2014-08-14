@@ -187,7 +187,7 @@ world
 <a><p>Some link!</p></a>
 </div>
 
-<p>Deeply nested tags, a custom tag, and strange capitalization as div:</p>
+<p>Deeply nested tags, a custom tag, and strange capitalization as div (should be "cleaned" by browser):</p>
 <div class="codeSection">
 <div id="theID" class = "someClass">
   <SpAN id=someSpan>
@@ -200,7 +200,7 @@ world
 </div>
 </div>
 
-<p>Same test as above but with textarea (should not be "cleaned"):</p>
+<p>Same test as above but with textarea (should be "raw"):</p>
 <textarea class="codeSection">
 <div id="theID" class = "someClass">
   <SpAN id=someSpan>
@@ -213,6 +213,25 @@ world
 </div>
 </textarea>
 
+<p>CSS Style applied to HTML plus a Doctype</p>
+<textarea class="codeSection">
+<!DOCTYPE html>
+<head>
+  <style>
+    .myClass {
+      background-color:#aabb33;
+      color:red;
+    }
+    body {
+      font-family: "Arial";
+    }
+  </style>
+</head>
+
+<body>
+  <div class="myClass">Hello world!</div>
+</body>
+</textarea>
 
 <h1>Misc. Tests</h1>
 <p>Language-ambiguous code:</p>

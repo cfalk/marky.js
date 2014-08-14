@@ -91,6 +91,8 @@ body {
 .marky-bool { color:#e41a1c; }
 .marky-number { color:#a65628; }
 .marky-inlineComment, .marky-multilineComment { color:#984ea3; }
+.marky-attributeKey { color:cyan; }
+.marky-attributeVal { color:#6eda1b; }
 .marky-special { color:#ff7f00; }
 
 .marky-language {

@@ -13,10 +13,11 @@ var lexer = {
       "javascript": "//[^\\n]*",
       "python": "#[^\\n]*",
       "ruby": "#[^\\n]*",
+      "html": "<!DOCTYPE"+any+"*?>"
   },
 
   "string": {
-      "javascript": "\".*?\"|'.*?'|/.*?/",
+      "javascript": "\".*?\"|'.*?'",
       "python": "\".*?\"|'.*?'",
       "ruby": "\".*?\"|'.*?'",
       "html": "\""+any+"*?\"|'"+any+"*?'|[^ >;,]+",
@@ -37,7 +38,7 @@ var lexer = {
       "javascript": ["[","]","{","}","(",")",";", ",", ".", ":"],
       "python": ["[","]","{","}","(",")",";", ",", ".", ":"],
       "ruby": ["[","]","{","}","(",")",";", ",", ".", ":"],
-      "html": ["<",">","/", "="]
+      "html": ["<",">","/", "=", "{", "}", ";", ":"]
   },
 
   "keyword": {
@@ -88,7 +89,8 @@ var lexer = {
   "bool": {
       "javascript": ["true", "false"],
       "python": ["True", "False"],
-      "ruby": ["true", "false"]
+      "ruby": ["true", "false"],
+      "html": "(#|.|)[a-zA-Z1-9-_*]+"
   },
 
   "identifier": {
@@ -102,10 +104,20 @@ var lexer = {
       "javascript": "[0-9]*\\.?[0-9]+",
       "python": "[0-9]+(\\.[0-9]+)?",
       "ruby": "[0-9]+(\\.[0-9]+)?",
+      "html": "#[a-fA-F0-9]{3}([a-fA-F0-9]{3})?"
   },
 
   "special": {
       "html":"[a-zA-Z]+",
+      "javascript":"/.*?/" //Used for: RegExp (eg: /some[sS]tring/)
+  },
+
+  "attributeKey": {
+      "html":"[a-zA-Z-]+", //Used for: CSS Attribute Keys
+  },
+
+  "attributeVal": {
+      "html":"\\\"?[a-zA-Z-\\s]+\\\"?", //Used for: CSS Attribute Vals
   }
 }
 
@@ -114,8 +126,9 @@ var precedence = {  // Earliest === Highest Precedence
   "default": [
       "multilineComment", "inlineComment",
       "string", "bool", "operator",
-      "keyword", "special", "identifier",
-      "number", "syntax"
+      "keyword", "identifier",
+      "special", "attributeKey",
+      "number", "attributeVal", "syntax"
   ],
 }
 
@@ -142,6 +155,16 @@ var borders = { //Precedence: Language, Default, None ("")
     "special": {
       "left":"\\<\\s*/?\\s*",
       "right":"[^a-zA-Z]"
+    },
+    "attributeKey": {
+      "right":"\\s*:\\s*"
+    },
+    "attributeVal": {
+      "left":"\\s*:\\s*",
+      "right":"[,;]"
+    },
+    "bool": {
+      "right": "\\s*{"
     }
   },
   "default": {
