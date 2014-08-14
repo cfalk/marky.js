@@ -201,6 +201,7 @@ var borders = { //Precedence: Language, Default, None ("")
       "left":"\\s*\\=\\s*" //TODO: Regex is lazy and needs to block HTML innards.
     },
     "identifier":{
+      "left":"\\<"+any+"+?", //TODO: Allow multiple matches (but skip non-border)
       "right":"\\s*\\=\\s*" //TODO: Same as above.
     },
     "keyword":{
@@ -239,7 +240,7 @@ var borders = { //Precedence: Language, Default, None ("")
 
 var languages = ["javascript", "python", "ruby", "html", "bash"];
 var caseInsensitive = ["html"]
-var ignoredTokens = ["identifier"]
+var ignoredTokens = ["identifier", "filename", "operator", "syntax"]
 
 
 function loadRegExpArray(arr) {
