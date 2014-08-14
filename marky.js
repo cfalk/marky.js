@@ -13,7 +13,8 @@ var lexer = {
       "javascript": "//[^\\n]*",
       "python": "#[^\\n]*",
       "ruby": "#[^\\n]*",
-      "html": "<!DOCTYPE"+any+"*?>"
+      "html": "<!DOCTYPE"+any+"*?>",
+      "bash": "#[^\\n]*",
   },
 
   "string": {
@@ -21,6 +22,7 @@ var lexer = {
       "python": "\".*?\"|'.*?'",
       "ruby": "\".*?\"|'.*?'",
       "html": "\""+any+"*?\"|'"+any+"*?'|[^ >;,]+",
+      "bash": "\".*?\"|'.*?'"
   },
 
   "operator": {
@@ -31,14 +33,17 @@ var lexer = {
                  "<=", ">=", "and", "not", "or", "&", "|", "~", "^", "<<", ">>"],
       "ruby": ["+", "-", "*", "/", "//", "%", "**", "===", "!=", "<=>", ">", "=",
                "<", "==", "equal?","!", "?:", "..", "...", "defined?",
-               "<=", ">=", "and", "not", "or", "&", "|", "~", "^", "<<", ">>"]
+               "<=", ">=", "and", "not", "or", "&", "|", "~", "^", "<<", ">>"],
+      "bash": ["+","-","*","/","**","%","+=","-=","*=","/=","%=","<<","<<=","=",
+               "==", ">>",">>=","<<=","&","&=","|","|=","~","^","^=","!","&&","||"]
   },
 
   "syntax": {
       "javascript": ["[","]","{","}","(",")",";", ",", ".", ":"],
       "python": ["[","]","{","}","(",")",";", ",", ".", ":"],
       "ruby": ["[","]","{","}","(",")",";", ",", ".", ":"],
-      "html": ["<",">","/", "=", "{", "}", ";", ":"]
+      "html": ["<",">","/", "=", "{", "}", ";", ":"],
+      "bash": ["[","]", "(", ")", "{", "}", ";"]
   },
 
   "keyword": {
@@ -82,15 +87,54 @@ var lexer = {
                "tr", "td", "th", "Forms", "Element", "form", "fieldset", "legend",
                "label", "input", "button", "select", "datalist", "optgroup",
                "option", "textarea", "keygen", "output", "progress", "meter",
-               "Interactive", "Element", "details", "summary", "menuitem", "menu"]
-
+               "Interactive", "Element", "details", "summary", "menuitem", "menu"],
+      //Source: http://ss64.com/bash/
+      "bash":["!", "[[", "]]", "case", "do", "done", "elif", "else",
+              "esac", "fi", "for", "function", "if", "in", "select", "then",
+              "time", "until", "while",
+              "alias", "apropos", "apt-get", "aptitude", "aspell", "awk",
+              "basename", "bash", "bc", "bg", "break", "builtin", "bzip2",
+              "cal", "case", "cat", "cd", "cfdisk", "chgrp", "chmod", "chown",
+              "chroot", "chkconfig", "cksum", "clear", "cmp", "comm", "command",
+              "continue", "cp", "cron", "crontab", "csplit", "cut", "date", "dc",
+              "dd", "ddrescue", "declare", "df", "diff", "diff3", "dig", "dir",
+              "dircolors", "dirname", "dirs", "dmesg", "du", "echo", "egrep",
+              "eject", "enable", "env", "ethtool", "eval", "exec", "exit",
+              "expect", "expand", "export", "expr", "false", "fdformat",
+              "fdisk", "fg", "fgrep", "file", "find", "fmt", "fold", "for",
+              "format", "free", "fsck", "ftp", "function", "fuser", "gawk",
+              "getopts", "grep", "groupadd", "groupdel", "groupmod", "groups",
+              "gzip", "hash", "head", "help", "history", "hostname", "iconv",
+              "id", "if", "ifconfig", "ifdown", "ifup", "import", "install",
+              "jobs", "join", "kill", "killall", "less", "let", "link", "ln",
+              "local", "locate", "logname", "logout", "look", "lpc", "lpr",
+              "lprint", "lprintd", "lprintq", "lprm", "ls", "lsof", "make",
+              "man", "mkdir", "mkfifo", "mkisofs", "mknod", "more", "mount",
+              "mtools", "mtr", "mv", "mmv", "netstat", "nice", "nl", "nohup",
+              "notify-send", "nslookup", "open", "op", "passwd", "paste",
+              "pathchk", "ping", "pkill", "popd", "pr", "printcap", "printenv",
+              "printf", "ps", "pushd", "pv", "pwd", "quota", "quotacheck",
+              "quotactl", "ram", "rcp", "read", "readarray", "readonly", "reboot",
+              "rename", "renice", "remsync", "return", "rev", "rm", "rmdir",
+              "rsync", "screen", "scp", "sdiff", "sed", "select", "seq", "set",
+              "sftp", "shift", "shopt", "shutdown", "sleep", "slocate", "sort",
+              "source", "split", "ssh", "strace", "su", "sudo", "sum", "suspend",
+              "sync", "tail", "tar", "tee", "test", "time", "timeout", "times",
+              "touch", "top", "traceroute", "trap", "tr", "true", "tsort", "tty",
+              "type", "ulimit", "umask", "umount", "unalias", "uname", "unexpand",
+              "uniq", "units", "unset", "unshar", "until", "uptime", "useradd",
+              "userdel", "usermod", "users", "uuencode", "uudecode", "v", "vdir",
+              "vi", "vmstat", "wait", "watch", "wc", "whereis", "which", "while",
+              "who", "whoami", "wget", "write", "xargs", "xdg-open", "yes", "zip",
+              ".", "!!", "###"]
   },
 
   "bool": {
       "javascript": ["true", "false"],
       "python": ["True", "False"],
       "ruby": ["true", "false"],
-      "html": "(#|.|)[a-zA-Z1-9-_*]+"
+      "html": "(#|.|)[a-zA-Z1-9-_*]+",
+      "bash": ["true", "false"],
   },
 
   "identifier": {
@@ -109,7 +153,8 @@ var lexer = {
 
   "special": {
       "html":"[a-zA-Z]+",
-      "javascript":"/.*?/" //Used for: RegExp (eg: /some[sS]tring/)
+      "javascript":"/.*?/", //Used for: RegExp (eg: /some[sS]tring/)
+      "bash":"/?([.a-zA-Z1-9_]+/?)+" //Used for: File names
   },
 
   "attributeKey": {
@@ -118,6 +163,10 @@ var lexer = {
 
   "attributeVal": {
       "html":"\\\"?[a-zA-Z-\\s]+\\\"?", //Used for: CSS Attribute Vals
+  },
+
+  "option": {
+      "bash": "-[-a-zA-Z0-9_]+",
   }
 }
 
@@ -127,7 +176,7 @@ var precedence = {  // Earliest === Highest Precedence
       "multilineComment", "inlineComment",
       "string", "bool", "operator",
       "keyword", "identifier",
-      "special", "attributeKey",
+      "special", "attributeKey", "option",
       "number", "attributeVal", "syntax"
   ],
 }
@@ -173,7 +222,7 @@ var borders = { //Precedence: Language, Default, None ("")
   }
 }
 
-var languages = ["javascript", "python", "ruby", "html"];
+var languages = ["javascript", "python", "ruby", "html", "bash"];
 var caseInsensitive = ["html"]
 
 function loadRegExpArray(arr) {

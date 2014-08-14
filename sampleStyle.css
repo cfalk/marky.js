@@ -92,16 +92,17 @@ body {
 .marky-number { color:#a65628; }
 .marky-inlineComment, .marky-multilineComment { color:#984ea3; }
 .marky-attributeKey { color:cyan; }
+.marky-option { color:cyan; }
 .marky-attributeVal { color:#6eda1b; }
 .marky-special { color:#ff7f00; }
 
 .marky-language {
  position:absolute;
  right:0px;
- bottom:0px;
+ bottom:-0.2em;
  opacity:0.5;
  padding:2px 4px;
- font-size:0.6em;
+ font-size:0.55em;
 }
 
 .emptyCodeLine, .emptyLineNumber { background-color:rgba(50,50,50,0.1); }

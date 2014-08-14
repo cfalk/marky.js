@@ -233,6 +233,25 @@ world
 </body>
 </textarea>
 
+<h1>Bash Tests</h1>
+<p>Basic commands</p>
+<div class="codeSection">cd ./static/</div>
+<div class="codeSection">mv old.txt new.md</div>
+
+<div class="codeSection">
+#!/bin/bash
+if [ "foo" = "foo" ]; then
+  echo "Hello world!"
+else
+  echo "Goodbye world!"
+fi
+</div>
+
+<p>Command with Options:</p>
+<div class="codeSection">
+find . -type f "*.py" -exec grep -L "some string"
+</div>
+
 <h1>Misc. Tests</h1>
 <p>Language-ambiguous code:</p>
 <div class="codeSection">
