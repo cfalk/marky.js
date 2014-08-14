@@ -53,7 +53,7 @@ var lexer = {
                     "null", "this", "true", "void", "with", "break",
                     "catch", "class", "const", "super", "throw", "while",
                     "yield", "delete", "export", "import", "public",
-                    "return", "static", "switch", "typeof", "default",
+                    "return", "switch", "typeof", "default",
                     "extends", "finally", "package", "private", "continue",
                     "debugger", "function", "arguments", "interface",
                     "protected", "implements", "instanceof", "document"],
@@ -141,7 +141,7 @@ var lexer = {
       "javascript": "[a-zA-Z_$]+[a-zA-Z0-9_$]*",
       "python": "[a-zA-Z_$]+[a-zA-Z0-9_]*",
       "ruby": "($|@?@?)[a-zA-Z_]+[a-zA-Z0-9_]*(\\?|\\!)?",
-      "html": "[a-zA-Z_-]+"
+      "html": "[a-zA-Z_-]+",
   },
 
   "number": {
@@ -153,7 +153,13 @@ var lexer = {
 
   "special": {
       "html":"[a-zA-Z]+",
-      "javascript":"/.*?/", //Used for: RegExp (eg: /some[sS]tring/)
+  },
+
+  "regex": {
+      "javascript":"/.*?/",
+  },
+
+  "filename": {
       "bash":"/?([.a-zA-Z1-9_]+/?)+" //Used for: File names
   },
 
@@ -174,9 +180,9 @@ var lexer = {
 var precedence = {  // Earliest === Highest Precedence
   "default": [
       "multilineComment", "inlineComment",
-      "string", "bool", "operator",
-      "keyword", "identifier",
-      "special", "attributeKey", "option",
+      "string", "regex", "bool", "operator",
+      "keyword", "identifier", "special",
+      "filename", "attributeKey", "option",
       "number", "attributeVal", "syntax"
   ],
 }
@@ -216,14 +222,25 @@ var borders = { //Precedence: Language, Default, None ("")
       "right": "\\s*{"
     }
   },
+
+  "bash": {
+    "filename": {
+      "left":"^|$|\\s|\\n", //TODO: Inaccurate! Should check right as well.
+      "right":"^|$|\\s|\\n"
+    }
+  },
+
   "default": {
-    "keyword":"[^a-zA-Z]|^|$",
+    "keyword":"[^a-zA-Z\.]|^|$",
     "inlineComment":"[^\"']|^|$",
+    "regex":"[^\\.]" //TODO: Simplistic
   }
 }
 
 var languages = ["javascript", "python", "ruby", "html", "bash"];
 var caseInsensitive = ["html"]
+var ignoredTokens = ["identifier"]
+
 
 function loadRegExpArray(arr) {
   //Prepare escape characters for the RegEx.
@@ -323,7 +340,7 @@ function measureMatchQuality(text, matches) {
   var totalChars = 0;
   for (var i=0; i<matches.length; i++) {
     var match = matches[i];
-    if (match["token"]=="identifier") continue;
+    if (ignoredTokens.indexOf(match["token"])>=0) continue;
     var length = match["end"]-match["start"];
     totalChars += length;
   }
@@ -403,14 +420,16 @@ function markyGetMatches(text, language) {
         var matchedText = match[1];
         var regexStart = match["index"];
         var start = text.slice(regexStart).indexOf(matchedText)+regexStart;
+        var end = start+matchedText.length;
         var matchObj = {
           "start":start,
-          "end":start+matchedText.length,
+          "end":end,
           "text":matchedText,
           "token":token,
           "language":language
         };
         matchObjs.push(matchObj);
+        pattern.lastIndex = end; //Ignore any `border` matches.
       }
     }
   });

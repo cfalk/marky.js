@@ -236,7 +236,7 @@ world
 <h1>Bash Tests</h1>
 <p>Basic commands</p>
 <div class="codeSection">cd ./static/</div>
-<div class="codeSection">mv old.txt new.md</div>
+<div class="codeSection">mv ../old.txt new.md</div>
 
 <div class="codeSection">
 #!/bin/bash
@@ -249,7 +249,7 @@ fi
 
 <p>Command with Options:</p>
 <div class="codeSection">
-find . -type f "*.py" -exec grep -L "some string"
+find . -type f "*.py" -exec grep -nr "some string"
 </div>
 
 <h1>Misc. Tests</h1>
