@@ -56,7 +56,8 @@ var lexer = {
                     "return", "switch", "typeof", "default",
                     "extends", "finally", "package", "private", "continue",
                     "debugger", "function", "arguments", "interface",
-                    "protected", "implements", "instanceof", "document"],
+                    "protected", "implements", "instanceof", "document", 
+                    "window"],
       //Source: http://stackoverflow.com/questions/14595922/list-of-python-keywords
       "python": ['as', 'assert', 'break', 'class', 'continue',
                  'def', 'del', 'elif', 'else', 'except', 'exec',
