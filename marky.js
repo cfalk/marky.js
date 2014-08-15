@@ -198,11 +198,12 @@ var borders = { //Precedence: Language, Default, None ("")
   */
   "html": {
     "string":{
-      "left":"\\s*\\=\\s*" //TODO: Regex is lazy and needs to block HTML innards.
+      "left":"\\<"+any+"*?=\\s*",
+      "right":""+any+"*?\\>"
     },
     "identifier":{
-      "left":"\\<"+any+"+?", //TODO: Allow multiple matches (but skip non-border)
-      "right":"\\s*\\=\\s*" //TODO: Same as above.
+      "left":"\\<"+any+"*?", //TODO: Allow multiple matches (but skip non-border)
+      "right":"\\s*\\="+any+"+?\\>"
     },
     "keyword":{
       "left":"\\<\\s*/?\\s*",
