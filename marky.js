@@ -56,7 +56,7 @@ var lexer = {
                     "return", "switch", "typeof", "default",
                     "extends", "finally", "package", "private", "continue",
                     "debugger", "function", "arguments", "interface",
-                    "protected", "implements", "instanceof", "document", 
+                    "protected", "implements", "instanceof", "document",
                     "window"],
       //Source: http://stackoverflow.com/questions/14595922/list-of-python-keywords
       "python": ['as', 'assert', 'break', 'class', 'continue',
@@ -242,7 +242,13 @@ var borders = { //Precedence: Language, Default, None ("")
 
 var languages = ["javascript", "python", "ruby", "html", "bash"];
 var caseInsensitive = ["html"]
-var ignoredTokens = ["identifier", "filename", "operator", "syntax"]
+
+var inferWeights = {
+  "keyword": 3,
+  "identifier": 0.5,
+  "syntax": 0.8,
+  "operator": 0.5,
+}
 
 
 function loadRegExpArray(arr) {
@@ -341,11 +347,17 @@ function filterMatches(matchObjs, language){
 
 function measureMatchQuality(text, matches) {
   var totalChars = 0;
+  var matchTotal = 0;
   for (var i=0; i<matches.length; i++) {
     var match = matches[i];
-    if (ignoredTokens.indexOf(match["token"])>=0) continue;
+
+    // Allow different tokens to have different "weights" in inferences
+    var weight = inferWeights[ match["token"] ];
+    if (weight===undefined) weight = 1;
+
+    // And include the percentage of the text coverage in the calculations.
     var length = match["end"]-match["start"];
-    totalChars += length;
+    totalChars += length*weight;
   }
   return parseFloat(totalChars)/text.length;
 }
@@ -417,6 +429,7 @@ function markyGetMatches(text, language) {
       if (right!=="") right = "(?:"+right+")";
 
       var pattern = new RegExp(left+"("+regexContent+")"+right, "gm"+matchCase);
+      console.log(token + " " + language  + " " + pattern)
 
       var match;
       while (match=pattern.exec(text)) {
