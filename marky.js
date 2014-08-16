@@ -188,7 +188,7 @@ var lexer = {
 
   "regex": {
       "javascript":"/.+?/",
-      "nginx":"[]*?"
+      "nginx":".+?"
   },
 
   "filename": {
@@ -281,6 +281,10 @@ var borders = { //Precedence: Language, Default, None ("")
     "keyword":"^|\\s|$",
     "filename": {
       "left":"[\\s]"
+    },
+    "regex": {
+      "left": "~\\*?\\s+",
+      "right":"\\s*\\{"
     },
     "identifier":{
     },
