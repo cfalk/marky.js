@@ -141,7 +141,10 @@ var lexer = {
                 "expires", "tcp_nopush", "log_format", "worker_connections", "if",
                 "else", "server_name"
                ],
-      "uwsgi": "^\\s*[a-zA-Z-]+"
+      "uwsgi": ["plugins","chdir","module","env","master","socket","processes",
+                "harakiri","max-requests","vacuum","daemonize",
+
+               ]
   },
 
   "bool": {
@@ -268,7 +271,7 @@ var borders = { //Precedence: Language, Default, None ("")
   },
 
   "uwsgi": {
-    "identifier":"[^\\s]\\s+",
+    "identifier":"^[^\\s]+\\s+",
     "keyword": {
       "right":"\\s*[^\\s]"
     }
