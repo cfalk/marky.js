@@ -247,15 +247,17 @@ var borders = { //Precedence: Language, Default, None ("")
   }
 }
 
+
 var languages = ["javascript", "python", "ruby", "html", "bash"];
 var caseInsensitive = ["html"]
-
 var inferWeights = {
   "keyword": 3,
   "identifier": 0.5,
   "syntax": 0.8,
   "operator": 0.5,
 }
+
+var matchSizeUnimportant = ["innards" ]
 
 
 function loadRegExpArray(arr) {
@@ -303,13 +305,15 @@ function filterMatches(matchObjs, language){
       if (match2===undefined) continue;
 
       //If matches are the same size, defer to precedence.
-      if (match1["end"]-match1["start"] == match2["end"]-match2["start"]) {
+      if (match1["end"]-match1["start"] == match2["end"]-match2["start"] ||
+         matchSizeUnimportant.indexOf(match1["token"])>=0 ||
+         matchSizeUnimportant.indexOf(match2["token"])>=0){
         continue;
       }
 
-      if ((match1["start"]<=match2["start"]) && (match1["end"]>=match2["end"])){
+      if  (match1["start"]<=match2["start"] && match1["end"]>=match2["end"]){
         matchObjs[j] = undefined;
-      } else if ((match2["start"]<=match1["start"]) && (match2["end"]>=match1["end"])){
+      } else if (match2["start"]<=match1["start"] && match2["end"]>=match1["end"]){
         matchObjs[i] = undefined;
       }
     }
