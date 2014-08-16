@@ -15,6 +15,7 @@ var lexer = {
       "ruby": "#[^\\n]*",
       "html": "<!DOCTYPE"+any+"*?>",
       "bash": "#[^\\n]*",
+      "nginx": "#[^\\n]*",
   },
 
   "string": {
@@ -22,7 +23,8 @@ var lexer = {
       "python": "\".*?\"|'.*?'",
       "ruby": "\".*?\"|'.*?'",
       "html": "\""+any+"*?\"|'"+any+"*?'|[^ >;,]+",
-      "bash": "\".*?\"|'.*?'"
+      "bash": "\".*?\"|'.*?'",
+      "nginx": "\".*?\"|'.*?'",
   },
 
   "operator": {
@@ -35,7 +37,8 @@ var lexer = {
                "<", "==", "equal?","!", "?:", "..", "...", "defined?",
                "<=", ">=", "and", "not", "or", "&", "|", "~", "^", "<<", ">>"],
       "bash": ["+","-","*","/","**","%","+=","-=","*=","/=","%=","<<","<<=","=",
-               "==", ">>",">>=","<<=","&","&=","|","|=","~","^","^=","!","&&","||"]
+               "==", ">>",">>=","<<=","&","&=","|","|=","~","^","^=","!","&&","||"],
+      "nginx": ["~", "^", "=", "|"]
   },
 
   "syntax": {
@@ -43,7 +46,8 @@ var lexer = {
       "python": ["[","]","{","}","(",")",";", ",", ".", ":"],
       "ruby": ["[","]","{","}","(",")",";", ",", ".", ":"],
       "html": ["<",">","/", "=", "{", "}", ";", ":"],
-      "bash": ["[","]", "(", ")", "{", "}", ";"]
+      "bash": ["[","]", "(", ")", "{", "}", ";"],
+      "nginx": ["{", "}", ";", ":", ".", "(", ")"]
   },
 
   "keyword": {
@@ -57,7 +61,7 @@ var lexer = {
                     "extends", "finally", "package", "private", "continue",
                     "debugger", "function", "arguments", "interface",
                     "protected", "implements", "instanceof", "document",
-                    "window"],
+                    "window", "NaN"],
       //Source: http://stackoverflow.com/questions/14595922/list-of-python-keywords
       "python": ['as', 'assert', 'break', 'class', 'continue',
                  'def', 'del', 'elif', 'else', 'except', 'exec',
@@ -127,7 +131,15 @@ var lexer = {
               "userdel", "usermod", "users", "uuencode", "uudecode", "v", "vdir",
               "vi", "vmstat", "wait", "watch", "wc", "whereis", "which", "while",
               "who", "whoami", "wget", "write", "xargs", "xdg-open", "yes", "zip",
-              ".", "!!", "###"]
+              ".", "!!", "###"],
+      "nginx": ["user", "include", "worker_processes", "error_log", "pid",
+                "worker_rlimit_nofile", "events", "http", "index", "default_type",
+                "access_log", "sendfile", "root", "server_name", "fastcgi_pass",
+                "location", "server", "listen", "upstream", "proxy_pass",
+                "expires", "tcp_nopush", "log_format", "worker_connections", "if",
+                "else", "server_name"
+
+               ]
   },
 
   "bool": {
@@ -143,17 +155,21 @@ var lexer = {
       "python": "[a-zA-Z_$]+[a-zA-Z0-9_]*",
       "ruby": "($|@?@?)[a-zA-Z_]+[a-zA-Z0-9_]*(\\?|\\!)?",
       "html": "[a-zA-Z_-]+",
+      "nginx": "[$a-zA-Z_]+",
   },
 
   "number": {
       "javascript": "[0-9]*\\.?[0-9]+",
       "python": "[0-9]+(\\.[0-9]+)?",
       "ruby": "[0-9]+(\\.[0-9]+)?",
-      "html": "#[a-fA-F0-9]{3}([a-fA-F0-9]{3})?"
+      "html": "#[a-fA-F0-9]{3}([a-fA-F0-9]{3})?",
+      "bash": "[0-9]+(\\.[0-9]+)?",
+      "nginx": "[0-9]+(\\.[0-9]+)?",
   },
 
   "special": {
       "html":"[a-zA-Z]+",
+      "nginx":"(http://|https://)[^;\\s]+",
   },
 
   "regex": {
@@ -161,7 +177,8 @@ var lexer = {
   },
 
   "filename": {
-      "bash":"/?([.a-zA-Z1-9_]+/?)+" //Used for: File names
+      "bash":"/?([.a-zA-Z0-9_-]+/?)+",
+      "nginx":"/?([.a-zA-Z0-9_-]+/?)+"
   },
 
   "attributeKey": {
@@ -239,6 +256,9 @@ var borders = { //Precedence: Language, Default, None ("")
       "right":"^|$|\\s|\\n"
     }
   },
+  "nginx": {
+    "keyword":"^|\\s",
+  },
 
   "default": {
     "keyword":"[^a-zA-Z\.]|^|$",
@@ -248,7 +268,7 @@ var borders = { //Precedence: Language, Default, None ("")
 }
 
 
-var languages = ["javascript", "python", "ruby", "html", "bash"];
+var languages = ["nginx", "javascript", "python", "ruby", "html", "bash"];
 var caseInsensitive = ["html"]
 var inferWeights = {
   "keyword": 3,
@@ -375,9 +395,6 @@ function measureMatchQuality(text, matches) {
 
 
 function markyInferLanguage(text) {
-  //TODO: test QUALITY instead of just QUANTITY.
-  //TODO: IE: Get the amount of unmatched text.
-
   var languageMatches = [];
   for (var i=0; i<languages.length; i++) {
     var language = languages[i];
@@ -389,6 +406,8 @@ function markyInferLanguage(text) {
       "quality":quality,
       "language":language
     });
+
+    if (quality>=1) break; //If the match is basically perfect, stop looking.
   }
 
   languageMatches.sort( function(a,b) {
