@@ -67,7 +67,7 @@ var lexer = {
                     "extends", "finally", "package", "private", "continue",
                     "debugger", "function", "arguments", "interface",
                     "protected", "implements", "instanceof", "document",
-                    "window", "NaN"],
+                    "window", "NaN", "console"],
       //Source: http://stackoverflow.com/questions/14595922/list-of-python-keywords
       "python": ['as', 'assert', 'break', 'class', 'continue',
                  'def', 'del', 'elif', 'else', 'except', 'exec',
@@ -321,9 +321,9 @@ var caseInsensitive = ["html"]
 var inferWeights = {
   "multilineComment": 10, //High since most are unique.
   "keyword": 5,
-  "syntax": 0.8,
   "filename": 0.5,
-  "identifier": 0.5,
+  "syntax": 0.1,
+  "identifier": 0.1,
   "operator": 0.2,
 }
 
@@ -441,7 +441,7 @@ function measureMatchQuality(text, matches) {
     totalChars += length;
   }
   var textCoverage = parseFloat(totalChars)/text.length;
-  return textCoverage * weightSum;
+  return (textCoverage*textCoverage) * weightSum;
 }
 
 
