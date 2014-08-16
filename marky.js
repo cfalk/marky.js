@@ -172,6 +172,10 @@ var lexer = {
       "html":"\\\"?[a-zA-Z-\\s]+\\\"?", //Used for: CSS Attribute Vals
   },
 
+  "innards": {
+      "html":"[^<\\s][^<]+?[^<\\s]*|[^<\\s]*[^<]+?[^<\\s]"
+  },
+
   "option": {
       "bash": "-[-a-zA-Z0-9_]+",
   }
@@ -181,10 +185,11 @@ var lexer = {
 var precedence = {  // Earliest === Highest Precedence
   "default": [
       "multilineComment", "inlineComment",
+      "attributeKey", "attributeVal", "innards",
       "string", "regex", "bool", "operator",
       "keyword", "identifier", "special",
-      "filename", "attributeKey", "option",
-      "number", "attributeVal", "syntax"
+      "filename", , "option",
+      "number", "syntax"
   ],
 }
 
@@ -199,11 +204,9 @@ var borders = { //Precedence: Language, Default, None ("")
   */
   "html": {
     "string":{
-      "left":"\\<"+any+"*?=\\s*",
-      "right":""+any+"*?\\>"
+      "left":"=\\s*",
     },
     "identifier":{
-      "left":"\\<"+any+"*?", //TODO: Allow multiple matches (but skip non-border)
       "right":"\\s*\\="+any+"+?\\>"
     },
     "keyword":{
@@ -223,6 +226,10 @@ var borders = { //Precedence: Language, Default, None ("")
     },
     "bool": {
       "right": "\\s*{"
+    },
+    "innards": {
+      "left":"\\>[\\s\\n\\r]*",
+      "right":"[\\s\\n\\r]*\\<",
     }
   },
 
@@ -429,14 +436,15 @@ function markyGetMatches(text, language) {
       if (right!=="") right = "(?:"+right+")";
 
       var pattern = new RegExp(left+"("+regexContent+")"+right, "gm"+matchCase);
-      console.log(token + " " + language  + " " + pattern)
 
       var match;
       while (match=pattern.exec(text)) {
         var matchedText = match[1];
+
         var regexStart = match["index"];
         var start = text.slice(regexStart).indexOf(matchedText)+regexStart;
         var end = start+matchedText.length;
+
         var matchObj = {
           "start":start,
           "end":end,
@@ -444,6 +452,7 @@ function markyGetMatches(text, language) {
           "token":token,
           "language":language
         };
+
         matchObjs.push(matchObj);
         pattern.lastIndex = end; //Ignore any `border` matches.
       }

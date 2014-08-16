@@ -91,12 +91,14 @@ body {
 .marky-syntax { color:#999999; }
 .marky-bool { color:#e41a1c; }
 .marky-number { color:#a65628; }
-.marky-inlineComment, .marky-multilineComment { color:#984ea3; }
+.marky-inlineComment,
+.marky-multilineComment { color:#984ea3; }
 .marky-attributeKey { color:cyan; }
 .marky-option { color:cyan; }
 .marky-attributeVal { color:#6eda1b; }
 .marky-special { color:#ff7f00; }
 .marky-filename { color:#1483c4; }
+.marky-innards { color:rgba(250,250,150,0.7); }
 
 .marky-language {
  position:absolute;
