@@ -22,7 +22,7 @@ var lexer = {
       "javascript": "\".*?\"|'.*?'",
       "python": "\".*?\"|'.*?'",
       "ruby": "\".*?\"|'.*?'",
-      "html": "\""+any+"*?\"|'"+any+"*?'|[^ >;,]+",
+      "html": "\""+any+"*?\"|'"+any+"*?'|[^ >;,\\s]+",
       "bash": "\".*?\"|'.*?'",
       "nginx": "\".*?\"|'.*?'",
   },
@@ -38,7 +38,8 @@ var lexer = {
                "<=", ">=", "and", "not", "or", "&", "|", "~", "^", "<<", ">>"],
       "bash": ["+","-","*","/","**","%","+=","-=","*=","/=","%=","<<","<<=","=",
                "==", ">>",">>=","<<=","&","&=","|","|=","~","^","^=","!","&&","||"],
-      "nginx": ["~", "^", "=", "|"]
+      "nginx": ["~", "^", "=", "|"],
+      "uwsgi": ["="]
   },
 
   "syntax": {
@@ -47,7 +48,8 @@ var lexer = {
       "ruby": ["[","]","{","}","(",")",";", ",", ".", ":"],
       "html": ["<",">","/", "=", "{", "}", ";", ":"],
       "bash": ["[","]", "(", ")", "{", "}", ";"],
-      "nginx": ["{", "}", ";", ":", ".", "(", ")"]
+      "nginx": ["{", "}", ";", ":", ".", "(", ")"],
+      "uwsgi": [".",":",";"]
   },
 
   "keyword": {
@@ -138,8 +140,8 @@ var lexer = {
                 "location", "server", "listen", "upstream", "proxy_pass",
                 "expires", "tcp_nopush", "log_format", "worker_connections", "if",
                 "else", "server_name"
-
-               ]
+               ],
+      "uwsgi": "^\\s*[a-zA-Z-]+"
   },
 
   "bool": {
@@ -148,6 +150,7 @@ var lexer = {
       "ruby": ["true", "false"],
       "html": "(#|.|)[a-zA-Z1-9-_*]+",
       "bash": ["true", "false"],
+      "uwsgi": ["True", "False"],
   },
 
   "identifier": {
@@ -156,6 +159,7 @@ var lexer = {
       "ruby": "($|@?@?)[a-zA-Z_]+[a-zA-Z0-9_]*(\\?|\\!)?",
       "html": "[a-zA-Z_-]+",
       "nginx": "[$a-zA-Z_]+",
+      "uwsgi": "[a-zA-Z_-]+"
   },
 
   "number": {
@@ -170,6 +174,7 @@ var lexer = {
   "special": {
       "html":"[a-zA-Z]+",
       "nginx":"(http://|https://)[^;\\s]+",
+      "uwsgi":"\\[uwsgi\\]"
   },
 
   "regex": {
@@ -178,7 +183,8 @@ var lexer = {
 
   "filename": {
       "bash":"/?([.a-zA-Z0-9_-]+/?)+",
-      "nginx":"/?([.a-zA-Z0-9_-]+/?)+"
+      "nginx":"/?([.a-zA-Z0-9_-]+/?)+",
+      "uwsgi":"/?([.a-zA-Z0-9_-]+/?)+"
   },
 
   "attributeKey": {
@@ -256,8 +262,16 @@ var borders = { //Precedence: Language, Default, None ("")
       "right":"^|$|\\s|\\n"
     }
   },
+
   "nginx": {
     "keyword":"^|\\s",
+  },
+
+  "uwsgi": {
+    "identifier":"[^\\s]\\s+",
+    "keyword": {
+      "right":"\\s*[^\\s]"
+    }
   },
 
   "default": {
@@ -268,7 +282,7 @@ var borders = { //Precedence: Language, Default, None ("")
 }
 
 
-var languages = ["nginx", "javascript", "python", "ruby", "html", "bash"];
+var languages = ["nginx", "uwsgi", "javascript", "python", "ruby", "html", "bash"];
 var caseInsensitive = ["html"]
 var inferWeights = {
   "keyword": 3,

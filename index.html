@@ -255,7 +255,7 @@ find . -type f "*.py" -exec grep -nr "some string"
 
 <h1>Nginx Tests</h1>
 
-<p>Basic Config</p>
+<p>Documentation's "Example Config"</p>
 <div class="codeSection">
 user       www www;  ## Default: nobody
 worker_processes  5;  ## Default: 1
@@ -329,6 +329,40 @@ http {
 }
 </div>
 
+<div class="codeSection">
+server {
+    server_name MyDjangoApp MyDjangoApp.co.vu;
+    root /var/www/MyAppFiles;
+    access_log /var/www/MyAppFiles/access.log;
+    error_log /var/www/MyAppFiles/error.log;
+    location /static/ {
+        alias /var/www/MyAppFiles/static/;
+        if ($query_string) {
+            expires max;
+        }
+    }
+    location / {
+        include /etc/nginx/
+        uwsgi_pass 127.0.0.1:49517;
+    }
+}
+</div>
+
+<h1>UWSGI Tests</h1>
+<div class="codeSection">
+[uwsgi]
+plugins = python
+chdir=/var/www/MyAppFiles/
+module=MyDjangoApp.wsgi:application
+env DJANGO_SETTINGS_MODULE=MyDjangoApp.settings
+master = True
+socket=127.0.0.1:49157
+processes=5
+harakiri=60
+max-requests=5000
+vacuum = True
+daemonize=/var/www/MyAppFiles/uwsgi.log
+</div>
 
 <h1>Misc. Tests</h1>
 <p>Language-ambiguous code:</p>
