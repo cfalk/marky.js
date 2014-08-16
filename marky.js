@@ -28,18 +28,22 @@ var lexer = {
   },
 
   "operator": {
-      "javascript": ["+","-","*","/","===", "!=", "==", "=", "<", ">",
+      "javascript": ["+","-","*","/","===", "!=", "==", "=", "<", ">", "\\",
                      "+=", "++", "--", "-=", "*=", ">=", "<=", "%", "%="],
       //Source: https://www.ics.uci.edu/~pattis/ICS-31/lectures/tokens.pdf
       "python": ["+", "-", "*", "/", "//", "%", "**", "==", "!=", "<", ">", "=",
-                 "<=", ">=", "and", "not", "or", "&", "|", "~", "^", "<<", ">>"],
+                 "<=", ">=", "and", "not", "or", "&", "|", "~", "^", "<<", ">>",
+                 "\\"
+                 ],
       "ruby": ["+", "-", "*", "/", "//", "%", "**", "===", "!=", "<=>", ">", "=",
                "<", "==", "equal?","!", "?:", "..", "...", "defined?",
-               "<=", ">=", "and", "not", "or", "&", "|", "~", "^", "<<", ">>"],
+               "<=", ">=", "and", "not", "or", "&", "|", "~", "^", "<<", ">>",
+               "\\"],
       "bash": ["+","-","*","/","**","%","+=","-=","*=","/=","%=","<<","<<=","=",
-               "==", ">>",">>=","<<=","&","&=","|","|=","~","^","^=","!","&&","||"],
-      "nginx": ["~", "^", "=", "|"],
-      "uwsgi": ["="]
+               "==", ">>",">>=","<<=","&","&=","|","|=","~","^","^=","!","&&","||",
+               "\\" ],
+      "nginx": ["~", "^", "=", "|", "\\"],
+      "uwsgi": ["=", "\\"]
   },
 
   "syntax": {
@@ -133,13 +137,13 @@ var lexer = {
               "userdel", "usermod", "users", "uuencode", "uudecode", "v", "vdir",
               "vi", "vmstat", "wait", "watch", "wc", "whereis", "which", "while",
               "who", "whoami", "wget", "write", "xargs", "xdg-open", "yes", "zip",
-              ".", "!!", "###"],
+              ".", "!!", "###", "service"],
       "nginx": ["user", "include", "worker_processes", "error_log", "pid",
                 "worker_rlimit_nofile", "events", "http", "index", "default_type",
                 "access_log", "sendfile", "root", "server_name", "fastcgi_pass",
                 "location", "server", "listen", "upstream", "proxy_pass",
                 "expires", "tcp_nopush", "log_format", "worker_connections", "if",
-                "else", "server_name"
+                "else", "server_name", "uwsgi_pass", "alias"
                ],
       "uwsgi": ["plugins","chdir","module","env","master","socket","processes",
                 "harakiri","max-requests","vacuum","daemonize",
@@ -151,7 +155,7 @@ var lexer = {
       "javascript": ["true", "false"],
       "python": ["True", "False"],
       "ruby": ["true", "false"],
-      "html": "(#|.|)[a-zA-Z1-9-_*]+",
+      "html": "(#|.|)[a-zA-Z0-9-_*]+",
       "bash": ["true", "false"],
       "uwsgi": ["True", "False"],
   },
@@ -161,8 +165,8 @@ var lexer = {
       "python": "[a-zA-Z_$]+[a-zA-Z0-9_]*",
       "ruby": "($|@?@?)[a-zA-Z_]+[a-zA-Z0-9_]*(\\?|\\!)?",
       "html": "[a-zA-Z_-]+",
-      "nginx": "[$a-zA-Z_]+",
-      "uwsgi": "[a-zA-Z_-]+"
+      "nginx": "[$a-zA-Z_\.]+",
+      "uwsgi": "[$a-zA-Z_\.]+",
   },
 
   "number": {
@@ -172,22 +176,25 @@ var lexer = {
       "html": "#[a-fA-F0-9]{3}([a-fA-F0-9]{3})?",
       "bash": "[0-9]+(\\.[0-9]+)?",
       "nginx": "[0-9]+(\\.[0-9]+)?",
+      "uwsgi": "[0-9]+(\\.[0-9]+)?",
   },
 
   "special": {
       "html":"[a-zA-Z]+",
       "nginx":"(http://|https://)[^;\\s]+",
+      "bash":"[a-zA-Z]+",
       "uwsgi":"\\[uwsgi\\]"
   },
 
   "regex": {
-      "javascript":"/.*?/",
+      "javascript":"/.+?/",
+      "nginx":"[]*?"
   },
 
   "filename": {
-      "bash":"/?([.a-zA-Z0-9_-]+/?)+",
-      "nginx":"/?([.a-zA-Z0-9_-]+/?)+",
-      "uwsgi":"/?([.a-zA-Z0-9_-]+/?)+"
+      "bash":"/?([\\.a-zA-Z0-9_-]+/?)+|/",
+      "nginx":"/?([\\.a-zA-Z0-9_-]+/?)+|/",
+      "uwsgi":"/?([\\.a-zA-Z0-9_-]+/?)+|/",
   },
 
   "attributeKey": {
@@ -196,6 +203,8 @@ var lexer = {
 
   "attributeVal": {
       "html":"\\\"?[a-zA-Z-\\s]+\\\"?", //Used for: CSS Attribute Vals
+      "nginx":"([0-9]+?\\.){3}[0-9](:[0-9]+)?",
+      "uwsgi":"([0-9]+?\\.){3}[0-9](:[0-9]+)?",
   },
 
   "innards": {
@@ -214,8 +223,8 @@ var precedence = {  // Earliest === Highest Precedence
       "attributeKey", "attributeVal", "innards",
       "string", "regex", "bool", "operator",
       "keyword", "identifier", "special",
-      "filename", , "option",
-      "number", "syntax"
+      "number", "filename", "option",
+      "syntax"
   ],
 }
 
@@ -260,27 +269,45 @@ var borders = { //Precedence: Language, Default, None ("")
   },
 
   "bash": {
+    "keyword":"^|\\s|$",
     "filename": {
-      "left":"^|$|\\s|\\n", //TODO: Inaccurate! Should check right as well.
-      "right":"^|$|\\s|\\n"
-    }
+      "left":"[\\s=]",
+    },
+    "special": "\\s|^|$",
+    "option":"",
   },
 
   "nginx": {
-    "keyword":"^|\\s",
+    "keyword":"^|\\s|$",
+    "filename": {
+      "left":"[\\s]"
+    },
+    "identifier":{
+    },
   },
 
   "uwsgi": {
-    "identifier":"^[^\\s]+\\s+",
+    "identifier":{
+      "left":"(?:=\\s*)|(?::\\s*)|(?:\\.)|(?:^[a-zA-Z_-]+\\s+)"
+    },
     "keyword": {
       "right":"\\s*[^\\s]"
+    },
+    "filename": {
+      "left":"[\\s*=]",
     }
   },
 
   "default": {
-    "keyword":"[^a-zA-Z\.]|^|$",
-    "inlineComment":"[^\"']|^|$",
-    "regex":"[^\\.]" //TODO: Simplistic
+    "keyword":"[^a-zA-Z]|^|$",
+    "inlineComment": {
+      "left":"(?!:[^\"].*\")|(?!:[^'].*')|^",
+    },
+    "regex":"[^\\.]", //TODO: Simplistic
+    "filename": {
+      "left":"[\\s^]",
+      "right":"\\s|$|;"
+    }
   }
 }
 
@@ -288,10 +315,12 @@ var borders = { //Precedence: Language, Default, None ("")
 var languages = ["nginx", "uwsgi", "javascript", "python", "ruby", "html", "bash"];
 var caseInsensitive = ["html"]
 var inferWeights = {
-  "keyword": 3,
-  "identifier": 0.5,
+  "multilineComment": 10, //High since most are unique.
+  "keyword": 5,
   "syntax": 0.8,
-  "operator": 0.5,
+  "filename": 0.5,
+  "identifier": 0.5,
+  "operator": 0.2,
 }
 
 var matchSizeUnimportant = ["innards" ]
@@ -299,7 +328,7 @@ var matchSizeUnimportant = ["innards" ]
 
 function loadRegExpArray(arr) {
   //Prepare escape characters for the RegEx.
-  var escapeTokens = "\\"+"^${}[]().*+-?<>/|".split("").join("|\\");
+  var escapeTokens = "\\"+"^${}[]().*+-?<>/\\|".split("").join("|\\");
   var escapeRegex = new RegExp("("+escapeTokens+")", "g");
 
   //Sort the tokens by largest to smallest, so that the RegEx will grab
@@ -395,19 +424,20 @@ function filterMatches(matchObjs, language){
 
 function measureMatchQuality(text, matches) {
   var totalChars = 0;
-  var matchTotal = 0;
+  var weightSum = 0;
   for (var i=0; i<matches.length; i++) {
     var match = matches[i];
 
     // Allow different tokens to have different "weights" in inferences
     var weight = inferWeights[ match["token"] ];
     if (weight===undefined) weight = 1;
+    weightSum += weight;
 
-    // And include the percentage of the text coverage in the calculations.
     var length = match["end"]-match["start"];
-    totalChars += length*weight;
+    totalChars += length;
   }
-  return parseFloat(totalChars)/text.length;
+  var textCoverage = parseFloat(totalChars)/text.length;
+  return textCoverage * weightSum;
 }
 
 
@@ -423,8 +453,6 @@ function markyInferLanguage(text) {
       "quality":quality,
       "language":language
     });
-
-    if (quality>=1) break; //If the match is basically perfect, stop looking.
   }
 
   languageMatches.sort( function(a,b) {
@@ -432,52 +460,81 @@ function markyInferLanguage(text) {
   });
   return languageMatches[0]["language"];
 }
-
-function getLeftRightBorders(token, language) {
-  var left, right;
-  var border = borders[language];
-  if (border!==undefined) border = border[token]
-  if (border!==undefined){
-    if (border["left"]!==undefined) left = border["left"];
-    if (border["right"]!==undefined) right = border["right"];
+/*
+  "javascript": {
+    "keyword":"[^a-zA-Z]|^|$"
   }
 
-  if (border===undefined) {
-    left = borders["default"][token];
-    right = borders["default"][token];
+  "default": {
+    "keyword":"[^a-zA-Z]|^|$",
+    "inlineComment": {
+      "left":"(!:[^\"].*\")|(!:[^'].*')|^",
+    },
+
+*/
+
+function getLeftRightBorders(token, language) {
+  var left, right, border;
+  var attempt = [language, "default"]
+
+  for (var i=0; i < attempt.length; i++) {
+    border = borders[ attempt[i] ];
+    if (border===undefined) continue;
+
+    border = border[token]
+    if (border===undefined) continue;
+    if (typeof border === "string") {
+      left = border;
+      right = border;
+    } else {
+      left = border["left"];
+      right = border["right"];
+    }
+    break;
   }
 
   if (left===undefined) left = "";
   if (right===undefined) right = "";
+
   return [left, right];
 }
 
+
+var patternCache = {}; //Cache patterns for increased speed.
 function markyGetMatches(text, language) {
   //Convert tabs to 4 spaces for cross-browser display continuity.
   var matchObjs = [];
   var matchCase = (caseInsensitive.indexOf(language)>=0) ? "i" : "";
 
+  var timer = new Date(); //TODO:
   //Apply each of the language token filters to add the appropriate classes.
   $.each(lexer, function(token, languageOptions){
+
     var regexContent = languageOptions[language];
     if (regexContent !== undefined) {
-      // Escape any characters in array inputs that need to be escaped.
-      if (regexContent instanceof Array) {
-        regexContent = loadRegExpArray(regexContent);
+
+      var pattern = patternCache[language +"_"+ token];
+      if (pattern === undefined) {
+        // Escape any characters in array inputs that need to be escaped.
+        if (regexContent instanceof Array) {
+          regexContent = loadRegExpArray(regexContent);
+        }
+
+
+        // Borders indicate characters that can not be adjacent to a token.
+        // Border Priority: language-specific, a cross-language default, then none.
+        var borderTuple = getLeftRightBorders(token, language);
+        var left = borderTuple[0];
+        var right = borderTuple[1];
+        if (left!=="") left = "(?:"+left+")";
+        if (right!=="") right = "(?:"+right+")";
+
+        pattern = new RegExp(left+"("+regexContent+")"+right, "gm"+matchCase);
+        patternCache[language +"_"+ token] = pattern;
       }
 
-
-      // Borders indicate characters that can not be adjacent to a token.
-      // Border Priority: language-specific, a cross-language default, then none.
-      var borderTuple = getLeftRightBorders(token, language);
-      var left = borderTuple[0];
-      var right = borderTuple[1];
-      if (left!=="") left = "(?:"+left+")";
-      if (right!=="") right = "(?:"+right+")";
-
-      var pattern = new RegExp(left+"("+regexContent+")"+right, "gm"+matchCase);
-
       var match;
+      var timer2 = new Date(); //TODO
       while (match=pattern.exec(text)) {
         var matchedText = match[1];
 
@@ -496,11 +553,17 @@ function markyGetMatches(text, language) {
         matchObjs.push(matchObj);
         pattern.lastIndex = end; //Ignore any `border` matches.
       }
+  var time2 = new Date() - timer2; //TODO
+  if (time2>5) console.log(" -- " + token + " -- " +time2);
     }
   });
 
   //Sort and filter the matches to avoid double-matching.
   var matchObjs = filterMatches(matchObjs, language)
+
+  var time = new Date() - timer; //TODO
+  if (time>5) console.log(language + " -- " +time);
+
   return matchObjs;
 }
 
@@ -607,13 +670,15 @@ function markySection($codeSection) {
 
 
 function markyDocument() {
- $(".codeSection").each(function() {
-   markySection($(this));
- });
+  $(".codeSection").each(function() {
+    markySection($(this));
+  });
 }
 
 
+var timer = new Date(); //TODO
 markyDocument()
+console.log((new Date()-timer)/1000.0 + " OVERALL"); //TODO
 
 // # # # # # # # # # # # # # # # # # # # # # #
 });
