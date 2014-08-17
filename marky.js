@@ -1,8 +1,8 @@
 $(document).on("ready", function() {
 // # # # # # # # # # # # # # # # # # # # # # #
 var any = "[.\\r\\n\\s\\S]";
-var singleQuoted = "'([^']|\\')*?'";
-var doubleQuoted = "\"([^\"])*\"";
+var singleQuoted = "'.*?[^\\\\]'|''";
+var doubleQuoted = singleQuoted.replace(/'/g,"\"")
 
 var lexer = {
   "multilineComment": {
@@ -25,7 +25,7 @@ var lexer = {
       "javascript": singleQuoted+"|"+doubleQuoted,
       "python": singleQuoted+"|"+doubleQuoted,
       "ruby": singleQuoted+"|"+doubleQuoted,
-      "html": "\""+any+"*?\"|'"+any+"*?'|[^ >;,\\s]+",
+      "html": singleQuoted+"|"+doubleQuoted+"|[^ >;,\\s]+",
       "bash": singleQuoted+"|"+doubleQuoted,
       "nginx": singleQuoted+"|"+doubleQuoted,
   },
