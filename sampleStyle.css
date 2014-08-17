@@ -83,6 +83,27 @@ body {
  background-color:rgba(0,0,0,0.5);
 }
 
+.marky-linkToCode {
+ position:absolute;
+ top:0px;
+ right:0px;
+ opacity:0.1;
+ padding:5px;
+ outline:none;
+
+ color:inherit;
+ text-decoration:inherit;
+
+ transition:all 0.15s ease;
+}
+.codeSection:hover .marky-linkToCode {
+ opacity:0.4;
+}
+.codeSection:hover .marky-linkToCode:hover {
+ opacity:0.8;
+ background-color:rgba(250,250,250,0.3);
+}
+
 /* Sample colorscheme source: http://colorbrewer2.org/ */
 .marky-keyword { color:#ffff33; }
 .marky-string { color:#f781bf; }

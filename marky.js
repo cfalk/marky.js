@@ -1,6 +1,9 @@
 $(document).on("ready", function() {
 // # # # # # # # # # # # # # # # # # # # # # #
 var any = "[.\\r\\n\\s\\S]";
+var singleQuoted = "'([^']|\\')*?'";
+var doubleQuoted = "\"([^\"])*\"";
+
 var lexer = {
   "multilineComment": {
       "javascript": "/\\*"+any+"*?\\*/",
@@ -10,21 +13,21 @@ var lexer = {
   },
 
   "inlineComment": {
-      "javascript": "//[^\\n]*",
-      "python": "#[^\\n]*",
-      "ruby": "#[^\\n]*",
-      "html": "<!DOCTYPE"+any+"*?>",
-      "bash": "#[^\\n]*",
-      "nginx": "#[^\\n]*",
+      "javascript": "//.*?",
+      "python": "#.*?",
+      "ruby": "#.*?",
+      "html": "<!DOCTYPE"+any+"*?>", //TODO: Change to `special`?
+      "bash": "#.*?",
+      "nginx": "#.*?",
   },
 
   "string": {
-      "javascript": "\".*?\"|'.*?'",
-      "python": "\".*?\"|'.*?'",
-      "ruby": "\".*?\"|'.*?'",
+      "javascript": singleQuoted+"|"+doubleQuoted,
+      "python": singleQuoted+"|"+doubleQuoted,
+      "ruby": singleQuoted+"|"+doubleQuoted,
       "html": "\""+any+"*?\"|'"+any+"*?'|[^ >;,\\s]+",
-      "bash": "\".*?\"|'.*?'",
-      "nginx": "\".*?\"|'.*?'",
+      "bash": singleQuoted+"|"+doubleQuoted,
+      "nginx": singleQuoted+"|"+doubleQuoted,
   },
 
   "operator": {
@@ -305,7 +308,8 @@ var borders = { //Precedence: Language, Default, None ("")
   "default": {
     "keyword":"[^a-zA-Z]|^|$",
     "inlineComment": {
-      "left":"(?!:[^\"].*\")|(?!:[^'].*')|^",
+      "left":"(?:^[^\"']*?)|(?:(?:(?!:\\\\)').*?')|(?:(?:(?!:\\\\)\").*?\")[^\"']*?",
+      "right":"\\n|$"
     },
     "regex":"[^\\.]", //TODO: Simplistic
     "filename": {
@@ -464,18 +468,7 @@ function markyInferLanguage(text) {
   });
   return languageMatches[0]["language"];
 }
-/*
-  "javascript": {
-    "keyword":"[^a-zA-Z]|^|$"
-  }
 
-  "default": {
-    "keyword":"[^a-zA-Z]|^|$",
-    "inlineComment": {
-      "left":"(!:[^\"].*\")|(!:[^'].*')|^",
-    },
-
-*/
 
 function getLeftRightBorders(token, language) {
   var left, right, border;
@@ -646,7 +639,7 @@ function markyText(text, language) {
   return buildMarkyCodeSection(lines)
 }
 
-function markySection($codeSection) {
+function markySection($codeSection, name) {
   //Grab the content (and escape any inner HTML)
   var text = $codeSection.html().trim()
   text = unEscapeHTML(text);
@@ -669,13 +662,19 @@ function markySection($codeSection) {
   $newBlock.addClass("marky-"+lang.replace(/ /g,""));
   $newBlock.append("<div class='marky-language'>"+lang+"</div>");
 
+  if (name!==undefined){
+    $newBlock.append("<a name='"+name+"' href='#"+name+"' "+
+                     "class='marky-linkToCode'>Link</a>");
+  }
+
   $codeSection.replaceWith($newBlock);
 }
 
 
 function markyDocument() {
-  $(".codeSection").each(function() {
-    markySection($(this));
+  $(".codeSection").each(function(index) {
+    var name = "jump-codeSection"+index;
+    markySection($(this), name);
   });
 }
 
