@@ -3,6 +3,7 @@ $(document).on("ready", function() {
 var any = "[.\\r\\n\\s\\S]";
 var singleQuoted = "'.*?[^\\\\]'|''";
 var doubleQuoted = singleQuoted.replace(/'/g,"\"")
+var linkChar = "&para;";
 
 var lexer = {
   "multilineComment": {
@@ -664,7 +665,8 @@ function markySection($codeSection, name) {
 
   if (name!==undefined){
     $newBlock.append("<a name='"+name+"' href='#"+name+"' "+
-                     "class='marky-linkToCode'>Link</a>");
+                     "title='Link to this code sample.'"+
+                     "class='marky-linkToCode'>"+linkChar+"</a>");
   }
 
   $codeSection.replaceWith($newBlock);
